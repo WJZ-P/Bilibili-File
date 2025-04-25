@@ -4,6 +4,7 @@
 import HelloWorld from './components/FloatingUI.vue';
 import viteLogoUrl from './assets/vite.svg';
 import vueLogoUrl from './assets/vue.svg';
+import FloatingUI from "./components/FloatingUI.vue";
 </script>
 
 <template>
@@ -15,7 +16,7 @@ import vueLogoUrl from './assets/vue.svg';
       <img :src="vueLogoUrl" class="logo vue" alt="Vue logo" />
     </a>
   </div>
-  <HelloWorld msg="Vite + Vue" />
+  <FloatingUI msg="Vite + Vue" />
 </template>
 
 <style scoped>
