@@ -1,6 +1,10 @@
 <!-- FileButton.vue -->
 <template>
-  <div :class="['file-button-container', position]">
+   <div
+    ref="dragContainer"
+    class="file-button-container"
+    :style="containerStyle"
+  >
     <button
       class="floating-button"
       @click="toggleContent"
@@ -29,41 +33,66 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
-const props = defineProps({
-  position: {
-    type: String,
-    default: 'top-center',
-    validator: (value) => [
-      'top-left',
-      'top-center',
-      'top-right',
-      'bottom-left',
-      'bottom-center',
-      'bottom-right'
-    ].includes(value)
-  },
-  buttonColor: {
-    type: String,
-    default: '#2196f3'
-  }
-})
+// 新增拖拽相关逻辑
+const dragContainer = ref(null)
+const isDragging = ref(false)
+const pos = ref({ x: 20, y: 20 }) // 默认位置
+const dragStartPos = ref({ x: 0, y: 0 })
 
-const emit = defineEmits(['toggle'])
-
-const isHovered = ref(false)
-const showContent = ref(false)
-
-const buttonStyle = computed(() => ({
-  '--button-color': props.buttonColor,
-  transform: isHovered.value ? 'scale(1.1)' : 'scale(1)'
+// 容器样式
+const containerStyle = computed(() => ({
+  left: `${pos.value.x}px`,
+  top: `${pos.value.y}px`,
+  zIndex: 9999,
+  cursor: isDragging.value ? 'grabbing' : 'grab'
 }))
 
-const toggleContent = () => {
-  showContent.value = !showContent.value
-  emit('toggle', showContent.value)
+// 拖拽事件处理
+const startDrag = (e) => {
+  isDragging.value = true
+  dragStartPos.value = {
+    x: e.clientX - pos.value.x,
+    y: e.clientY - pos.value.y
+  }
+  document.addEventListener('mousemove', drag)
+  document.addEventListener('mouseup', stopDrag)
 }
+
+const drag = (e) => {
+  if (!isDragging.value) return
+
+  // 计算新位置
+  let newX = e.clientX - dragStartPos.value.x
+  let newY = e.clientY - dragStartPos.value.y
+
+  // 边界限制
+  const containerWidth = dragContainer.value?.offsetWidth || 0
+  const containerHeight = dragContainer.value?.offsetHeight || 0
+  newX = Math.max(0, Math.min(newX, window.innerWidth - containerWidth))
+  newY = Math.max(0, Math.min(newY, window.innerHeight - containerHeight))
+
+  pos.value = { x: newX, y: newY }
+}
+
+const stopDrag = () => {
+  isDragging.value = false
+  document.removeEventListener('mousemove', drag)
+  document.removeEventListener('mouseup', stopDrag)
+  // 可选：保存位置到 localStorage
+}
+
+onMounted(() => {
+  // 初始化拖拽
+  dragContainer.value.addEventListener('mousedown', startDrag)
+
+  // 恢复保存的位置
+  const savedPos = localStorage.getItem('fileButtonPos')
+  if (savedPos) {
+    pos.value = JSON.parse(savedPos)
+  }
+})
 </script>
 
 <style scoped>
