@@ -46,49 +46,22 @@ const ripplePosition = ref({ x: 0, y: 0 })
 const showContent = ref(false)//为true的时候就是点击了按钮，要展开
 const isHovered = ref(false)
 
+// 计算按钮样式
+const buttonStyle = computed(() => ({
+  transform: isHovered.value ? 'scale(1.1)' : 'scale(1)',//鼠标悬浮的时候，会
+  opacity: isDragging.value ? 0.8 : 1,//被拖动的时候会有一点点小透明
+}))
+
+// 切换内容显示的方法
+const toggleContent = () => {
+  showContent.value = !showContent.value
+}
+
 // 新增拖拽相关逻辑
 const dragContainer = ref(null)
 const isDragging = ref(false)
 const pos = ref({x: 20, y: 20}) // 默认位置
 const dragStartPos = ref({x: 0, y: 0})
-
-// 计算按钮样式（新增特效参数）
-const buttonStyle = computed(() => ({
-  transform: `
-    scale(${isHovered.value ? 1.1 : 1})
-    rotate(${isDragging.value ? '2deg' : '0'})
-  `,
-  opacity: isDragging.value ? 0.9 : 1,
-  background: isHovered.value
-    ? `radial-gradient(
-        circle at ${ripplePosition.value.x}px ${ripplePosition.value.y}px,
-        #fb729966,
-        #fb7299dd
-      )`
-    : '#fb7299'
-}))
-
-// 涟漪效果样式
-const rippleStyle = computed(() => ({
-  left: `${ripplePosition.value.x}px`,
-  top: `${ripplePosition.value.y}px`,
-  background: `radial-gradient(circle, #fff3 0%, #fff0 100%)`
-}))
-
-// 修改点击事件处理
-const toggleContent = (e) => {
-  // 触发涟漪效果
-  showRipple.value = true
-  ripplePosition.value = {
-    x: e.offsetX,
-    y: e.offsetY
-  }
-  setTimeout(() => showRipple.value = false, 600)
-
-  // 原有逻辑
-  showContent.value = !showContent.value
-}
-
 
 // 容器样式
 const containerStyle = computed(() => ({
@@ -162,8 +135,8 @@ onMounted(() => {
 .floating-button {
   border: none;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 45px;
+  height: 45px;
   cursor: pointer;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
