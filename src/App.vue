@@ -1,5 +1,5 @@
 <template>
-  <FileButton position="top-right" button-color="#ff4081">
+  <FileButton position="top-left" button-color="#ff4081">
     <!-- 这里可以插入任何Vue组件 -->
     <div class="custom-content">
       <h3>我的文件面板</h3>

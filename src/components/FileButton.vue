@@ -21,8 +21,6 @@
                 fill="currentColor"></path>
         </svg>
       </slot>
-<!--      点击时候的涟漪效果-->
-      <span v-if="showRipple" class="ripple-effect" :style="rippleStyle"></span>
     </button>
 
     <transition name="fade-slide">
@@ -38,9 +36,6 @@
 
 <script setup>
 import {ref, computed, onMounted} from 'vue'
-// 新增特效相关响应式变量
-const showRipple = ref(false)
-const ripplePosition = ref({ x: 0, y: 0 })
 
 // 新增需要的响应式变量
 const showContent = ref(false)//为true的时候就是点击了按钮，要展开
@@ -168,7 +163,7 @@ onMounted(() => {
   background: white;
   transform: rotate(45deg);
   top: -6px;
-  left: 20px;
+  left: 18px;
 }
 
 .content-body {
