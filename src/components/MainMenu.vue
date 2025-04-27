@@ -1,13 +1,32 @@
 <script setup>
 // 后续可在这里添加逻辑
+import {ref} from 'vue'
+
+const isHovered = ref(false);
+
+const handleMouseEnter = () => isHovered.value = true
+const handleMouseLeave = () => isHovered.value = false
+
 </script>
 
 <template>
   <div class="main-menu">
     <div class="file-manager">
       <h1 class="cyber-title">
-        <span class="gradient-text">Bilibili File</span>
-        <span class="glow"></span>
+        <a
+            href="https://github.com/WJZ-P/Bilibili-File"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="title-link"
+            @mouseenter="handleMouseEnter"
+            @mouseleave="handleMouseLeave"
+        >
+          <span class="gradient-text">
+        <template v-if="!isHovered">Bilibili File ( ｡・▽・｡ )ﾉ</template>
+        <template v-else>Bilibili File (*ﾉωﾉ)</template>
+      </span>
+          <span class="glow"></span>
+        </a>
       </h1>
       <!-- 头部操作区 -->
       <div class="action-bar">
@@ -16,7 +35,7 @@
           <span>点击上传 / 拖放文件</span>
         </div>
         <div class="search-box">
-          <input type="text" placeholder="搜索文件...">
+          <input type="text" placeholder="🔍搜索文件...">
           <i class="iconfont icon-search"></i>
         </div>
       </div>
@@ -49,7 +68,7 @@
       </div>
 
       <!-- 底部统计 -->
-      <div class="status-bar">
+      <div class="status-bar" style="width: 100%">
         <div class="storage-info">
           <span>已用空间：3.2GB / 10GB</span>
           <div class="storage-progress">
@@ -90,7 +109,7 @@
   display: inline-block;
   transform: translateZ(0);
   transition: transform 0.3s;
-  width: fit-content;     /* 新增 */
+  width: fit-content; /* 新增 */
 }
 
 .glow {
@@ -151,6 +170,8 @@
   display: flex;
   gap: 20px;
   margin-bottom: 30px;
+  justify-content: center;
+  align-items: center;
 }
 
 .upload-area {
@@ -172,27 +193,68 @@
 }
 
 .search-box {
-  width: 300px;
+  width: 320px;
   position: relative;
-
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  justify-content: center;
+  height: 45px;
   input {
     width: 100%;
-    padding: 12px 40px 12px 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+    padding: 14px 48px 14px 24px;
+    border: 2px solid #00aeec;
+    border-radius: 40px;
+    background: rgba(245, 251, 255, 0.8);
+    font-size: 14px;
+    color: #18191c;
+    transition: all 0.3s;
+
+    &::placeholder {
+      color: #9499a0;
+      font-weight: 400;
+    }
+
+    &:hover {
+      border-color: #0099cc;
+      box-shadow: 0 2px 8px rgba(0, 174, 236, 0.12);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #0088b7;
+      box-shadow: 0 4px 16px rgba(0, 174, 236, 0.16);
+      background: #fff;
+    }
   }
 
   .iconfont {
     position: absolute;
-    right: 15px;
+    right: 20px;
     top: 50%;
     transform: translateY(-50%);
-    color: #999;
+    color: #00aeec;
+    font-size: 20px;
+    transition: all 0.3s;
+  }
+
+  &:hover .iconfont {
+    color: #0099cc;
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  input:focus ~ .iconfont {
+    color: #0088b7;
+    animation: searchPulse 1.5s infinite;
   }
 }
 
+@keyframes searchPulse {
+  0%, 100% { transform: translateY(-50%) scale(1); }
+  50% { transform: translateY(-50%) scale(1.15); }
+}
+
 /* 文件列表 */
-.file-list{
+.file-list {
   width: 100%;
 }
 
