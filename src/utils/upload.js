@@ -1,2 +1,66 @@
-//cookie里面的bili_jct=2f2360f9f7a2dd0d6601c1c463104216;这个就是图片上传接口的csrf
-export const params={}
+const uploadUrl = "https://api.bilibili.com/x/article/creative/article/upcover";
+
+/**
+ * B站图片上传函数
+ * @param {File} file - 通过input[type=file]获取的文件对象
+ * @param {Object} credentials - 认证信息 
+ *         @property {string} csrf - 从cookie中获取的bili_jct值
+ *         @property {string} cookie - 完整的cookie字符串
+ * @param {Object} [options] - 可选参数
+ *         @property {string} filename - 自定义文件名（默认随机生成）
+ * @returns {Promise<Object>} - 返回B站API响应结果
+ */
+async function upload(file, credentials, options = {}) {
+  // 校验必要参数
+  if (!file || !credentials?.csrf || !credentials?.cookie) {
+    throw new Error('缺少必要参数：file/csrf/cookie');
+  }
+
+  // 构建FormData
+  const formData = new FormData();
+  const filename = options.filename || 
+    `bili_upload_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+  formData.append("binary", file, filename);
+  formData.append("filename", filename);
+  formData.append("csrf", credentials.csrf);
+
+  // 配置请求头
+  const headers = new Headers({
+    "accept": "*/*",
+    "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6,zh-TW;q=0.5",
+    "origin": "https://member.bilibili.com",
+    "priority": "u=1, i",
+    "referer": "https://member.bilibili.com/",
+    "sec-ch-ua": "\"Microsoft Edge\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-site",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0",
+    "Cookie": credentials.cookie
+  });
+
+  try {
+    const response = await fetch(uploadUrl, {
+      method: "POST",
+      headers,
+      body: formData,
+      redirect: "follow"
+    });
+
+    const result = await response.json();
+    
+    // B站API通过code字段判断成功 (0表示成功)
+    if (result.code !== 0) {
+      throw new Error(`上传失败: ${result.message} (code: ${result.code})`);
+    }
+    
+    return result.data; // 返回有效数据，例如图片URL
+
+  } catch (error) {
+    console.error('上传请求异常:', error);
+    throw new Error(`网络请求失败: ${error.message}`);
+  }
+}

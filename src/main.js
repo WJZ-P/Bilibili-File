@@ -19,9 +19,10 @@ createApp(App).mount(
 
 console.log("[Bilibili-File] 启动")
 //尝试获取bili_jct作为上传参数csrf。
-console.log(document.cookie)
-params['bili_jct']=document.cookie.split('; ').find(row => row.startsWith('bili_jct='))?.split('=')[1]
-
+// console.log(document.cookie)
+params['bili_jct'] = document.cookie.split('; ').find(row => row.startsWith('bili_jct='))?.split('=')[1]
+params['cookie'] = document.cookie
+console.log(params.bili_jct)
 //尝试加上我自己的按钮，方案是复制B站的
 if (urls.includes(window.location.href)) addMyBtn()
 else console.log("[Bilibili-File] 不在B站首页，不添加上传按钮")
