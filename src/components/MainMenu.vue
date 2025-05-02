@@ -1,15 +1,8 @@
-<script setup>
-// 后续可在这里添加逻辑
-import {ref} from 'vue'
-
-const isHovered = ref(false);
-
-const handleMouseEnter = () => isHovered.value = true
-const handleMouseLeave = () => isHovered.value = false
-
-</script>
-
 <template>
+  <link
+      rel="stylesheet"
+      href="https://at.alicdn.com/t/c/font_1234567_abcdefghijk.css"
+  >
   <div class="main-menu">
     <div class="file-manager">
       <h1 class="cyber-title">
@@ -33,6 +26,14 @@ const handleMouseLeave = () => isHovered.value = false
         <div class="upload-area" @click="handleUpload">
           <i class="iconfont icon-upload"></i>
           <span>点击上传 / 拖放文件</span>
+          <!--          这里要放一个隐藏的input元素，用来触发事件-->
+          <input
+              type="file"
+              ref="fileInput"
+              multiple
+              style="display: none"
+              @change="handleFileSelect"
+          >
         </div>
         <div class="search-box">
           <input type="text" placeholder="🔍搜索文件...">
@@ -42,30 +43,45 @@ const handleMouseLeave = () => isHovered.value = false
 
       <!-- 文件列表 -->
       <div class="file-list">
+        <!-- 表头 -->
         <div class="list-header">
           <div class="col-name">文件名</div>
-          <div class="col-size">大小</div>
-          <div class="col-date">修改日期</div>
-          <div class="col-actions">操作</div>
+          <div class="col-size" style="text-align: center">大小</div>
+          <div class="col-date" style="text-align: center">上传日期</div>
+          <div class="col-actions" style="text-align: center">操作</div>
         </div>
 
-        <div class="list-item" v-for="item in 5" :key="item">
-          <div class="col-name">
+        <!-- 动态文件项 -->
+        <div
+            class="list-item"
+            v-for="file in files"
+            :key="file.name + file.size"
+        >
+          <div class="col-name" style="text-align: center">
             <i class="iconfont icon-file"></i>
-            示例文件_{{ item }}.zip
+            {{ file.name }}
           </div>
-          <div class="col-size">2.3MB</div>
-          <div class="col-date">2023-12-15</div>
+          <div class="col-size" style="text-align: center">{{ formatSize(file.size) }}</div>
+          <div class="col-date" style="text-align: center">{{ formatDate(file.lastModified) }}</div>
           <div class="col-actions">
-            <button class="btn-download">
+            <button
+                class="btn-download"
+                @click.stop="handleDownload(file)"
+            >
               <i class="iconfont icon-download"></i>
+              <span>下载</span>
             </button>
-            <button class="btn-delete">
+            <button
+                class="btn-delete"
+                @click.stop="handleDelete(file)"
+            >
               <i class="iconfont icon-delete"></i>
+              <span>删除</span>
             </button>
           </div>
         </div>
       </div>
+
 
       <!-- 底部统计 -->
       <div class="status-bar" style="width: 100%">
@@ -79,6 +95,84 @@ const handleMouseLeave = () => isHovered.value = false
     </div>
   </div>
 </template>
+
+<script setup>
+// 后续可在这里添加逻辑
+import {ref} from 'vue'
+// 获取input元素的引用
+const fileInput = ref(null);
+const isHovered = ref(false);
+const files = ref([]);
+
+const handleUpload = () => fileInput.value.click();
+
+
+// 处理文件选择
+const handleFileSelect = (event) => {
+  console.log("下面打印出传入的文件参数")
+  console.log(event.target.files)
+  const newFiles = [...event.target.files].map(file => ({
+    name: file.name,
+    size: file.size,
+    // lastModified: file.lastModified,
+    lastModified: Date.now(),
+    nativeFile: file  // 保留原生文件对象
+  }));
+
+  // 去重逻辑需要相应调整
+  files.value = [...new Set([
+    ...files.value,
+    ...newFiles.filter(newFile =>
+        !files.value.some(existing =>
+            existing.name === newFile.name &&
+            existing.size === newFile.size
+        )
+    )
+  ])];
+
+  // 简单反馈
+  // if (newFiles.length) {
+  //   alert(`成功添加 ${newFiles.length} 个文件`);
+  // } else {
+  //   alert('没有新文件被添加');
+  // }
+};
+
+// 新增日期格式化方法
+const formatDate = (timestamp) => {
+  const date = new Date(timestamp);
+  return date.toISOString().split('T')[0]; // YYYY-MM-DD格式
+};
+
+// 格式化文件大小
+const formatSize = (bytes) => {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
+};
+
+// 新增操作方法
+const handleDownload = (file) => {
+  // 创建临时下载链接
+  const url = URL.createObjectURL(file.nativeFile);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = file.name;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const handleDelete = (file) => {
+  files.value = files.value.filter(
+      f => !(f.name === file.name && f.size === file.size)
+  );
+};
+
+const handleMouseEnter = () => isHovered.value = true
+const handleMouseLeave = () => isHovered.value = false
+
+</script>
 
 <style scoped>
 .cyber-title {
@@ -199,6 +293,7 @@ const handleMouseLeave = () => isHovered.value = false
   display: flex;
   justify-content: center;
   height: 45px;
+
   input {
     width: 100%;
     padding: 14px 48px 14px 24px;
@@ -249,8 +344,12 @@ const handleMouseLeave = () => isHovered.value = false
 }
 
 @keyframes searchPulse {
-  0%, 100% { transform: translateY(-50%) scale(1); }
-  50% { transform: translateY(-50%) scale(1.15); }
+  0%, 100% {
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    transform: translateY(-50%) scale(1.15);
+  }
 }
 
 /* 文件列表 */
@@ -297,31 +396,39 @@ const handleMouseLeave = () => isHovered.value = false
 .col-actions {
   display: flex;
   gap: 15px;
+  justify-content: center;
 
   button {
+    background: #00c1ff;
     border: none;
-    background: none;
-    cursor: pointer;
     padding: 8px;
     border-radius: 6px;
-
-    &:hover {
-      background: #f5f5f5;
-    }
+    cursor: pointer;
+    transition: 0.2s;
+    width: 60px;
 
     .iconfont {
+      color: white;
       font-size: 18px;
     }
-  }
 
-  .btn-download .iconfont {
-    color: #00aeec;
-  }
+    &:hover {
+      background: #66ccff;
+      transform: translateY(-2px);
+      box-shadow: 0 3px 12px rgba(0, 174, 236, 0.3);
+    }
 
-  .btn-delete .iconfont {
-    color: #ff4d4f;
+    &.btn-delete {
+      background: #ff4d4f;
+
+      &:hover {
+        background: #ff6668;
+        box-shadow: 0 3px 12px rgba(255, 77, 79, 0.3);
+      }
+    }
   }
 }
+
 
 /* 存储进度条 */
 .storage-progress {
