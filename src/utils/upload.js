@@ -9,7 +9,7 @@ export const credentials = {}//这个被导出后，在mian里面被传参传入
  *         @property {string} filename - 自定义文件名（默认随机生成）
  * @returns {Promise<Object>} - 返回B站API响应结果
  */
-async function upload(file, options = {}) {
+export async function uploadFile(file, options = {}) {
     // 校验必要参数
     if (!file || !credentials?.csrf || !credentials?.cookie) {
         throw new Error('缺少必要参数：file/csrf/cookie');

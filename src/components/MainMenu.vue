@@ -112,6 +112,7 @@ const handleFileSelect = (event) => {
   console.log("下面打印出传入的文件参数")
   console.log(event.target.files)
   //加上文件上传
+  uploadFile
 
   //添加进来的新的文件
   const newFiles = [...event.target.files].map(file => ({

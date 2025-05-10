@@ -27,16 +27,22 @@ console.log(credentials.bili_jct)
 if (urls.includes(window.location.href)) addMyBtn()
 else console.log("[Bilibili-File] 不在B站首页，不添加上传按钮")
 
+//如果当前是bilibili-file的路由，改一下标题
+if(window.location.href.includes("bilibili-file")){
+    document.title="文件上传 - Bilibili-File"
+}
 function addMyBtn() {
     //B站右上角的列表，最后一个元素的投稿
     const list = document.querySelector(".right-entry")
-    const button = document.querySelector("#i_cecream > div.bili-feed4 > div.bili-header.large-header > div.bili-header__bar > ul.right-entry > li.right-entry-item.right-entry-item--upload")
+    const button = document.querySelector(".right-entry-item--upload")
+    console.log(list)
+    console.log(button)
     let cloneBtn;
     //复制一个button
     if (list && button) {
         cloneBtn = button.cloneNode(true)
         console.log(cloneBtn)
-        cloneBtn.id = "bilibili-file-upload"
+        cloneBtn.id = "bilibili-file-uploadFile"
         list.appendChild(cloneBtn)
     } else {
         console.log("[Bilibili-File] 元素未找到，添加上传按钮失败")
