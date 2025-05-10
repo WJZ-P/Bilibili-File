@@ -2,27 +2,28 @@ const uploadUrl = "https://api.bilibili.com/x/article/creative/article/upcover";
 export const credentials = {}//这个被导出后，在mian里面被传参传入upload函数
 /**
  * B站图片上传函数
- * @param {File} file - 通过input[type=file]获取的文件对象
+ * @param {File} file - 文件对象
  *         @property {string} csrf - 从cookie中获取的bili_jct值
  *         @property {string} cookie - 完整的cookie字符串
  * @param {Object} [options] - 可选参数
  *         @property {string} filename - 自定义文件名（默认随机生成）
  * @returns {Promise<Object>} - 返回B站API响应结果
  */
-export async function uploadFile(file, options = {}) {
+export async function uploadFile(file) {
+    //console.log(credentials)
     // 校验必要参数
-    if (!file || !credentials?.csrf || !credentials?.cookie) {
+    if (!file || !credentials?.bili_jct || !credentials?.cookie) {
         throw new Error('缺少必要参数：file/csrf/cookie');
     }
 
     // 构建FormData
     const formData = new FormData();
-    const filename = options.filename ||
+    const filename = file.name ||
         `bili_upload_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
     formData.append("binary", file, filename);//这里应该是二进制数据
     formData.append("filename", filename);
-    formData.append("csrf", credentials.csrf);
+    formData.append("csrf", credentials.bili_jct);
 
     // 配置请求头
     const headers = new Headers({
@@ -50,7 +51,7 @@ export async function uploadFile(file, options = {}) {
         });
 
         const result = await response.json();
-
+        console.log(result)
         // B站API通过code字段判断成功 (0表示成功)
         if (result.code !== 0)
             return new Error(`上传失败: ${result.message} (code: ${result.code})`);

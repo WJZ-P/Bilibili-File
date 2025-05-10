@@ -99,6 +99,7 @@
 <script setup>
 // 后续可在这里添加逻辑
 import {ref} from 'vue'
+import {uploadFile} from "../utils/upload.js";
 // 获取input元素的引用
 const fileInput = ref(null);
 const isHovered = ref(false);
@@ -112,7 +113,10 @@ const handleFileSelect = (event) => {
   console.log("下面打印出传入的文件参数")
   console.log(event.target.files)
   //加上文件上传
-  uploadFile
+  const results=[]//存放上传文件的路径
+  for(let file of event.target.files){
+    results.push(uploadFile(file))
+  }
 
   //添加进来的新的文件
   const newFiles = [...event.target.files].map(file => ({
