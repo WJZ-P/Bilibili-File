@@ -30,7 +30,7 @@ export async function uploadFile(file) {
         "accept": "*/*",
         "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6,zh-TW;q=0.5",
         "origin": "https://member.bilibili.com",
-        "priority": "u=1, i",
+        //"priority": "u=1, i",
         "referer": "https://member.bilibili.com/",
         "sec-ch-ua": "\"Microsoft Edge\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
         "sec-ch-ua-mobile": "?0",
