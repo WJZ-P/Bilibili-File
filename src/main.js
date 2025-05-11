@@ -35,13 +35,13 @@ function addMyBtn() {
     //B站右上角的列表，最后一个元素的投稿
     const list = document.querySelector(".right-entry")
     const button = document.querySelector(".right-entry-item--upload")
-    console.log(list)
-    console.log(button)
+    // console.log(list)
+    // console.log(button)
     let cloneBtn;
     //复制一个button
     if (list && button) {
         cloneBtn = button.cloneNode(true)
-        console.log(cloneBtn)
+        // console.log(cloneBtn)
         cloneBtn.id = "bilibili-file-uploadFile"
         list.appendChild(cloneBtn)
     } else {
