@@ -5,8 +5,6 @@ export const credentials = {}//这个被导出后，在mian里面被传参传入
  * @param {File} file - 文件对象
  *         @property {string} csrf - 从cookie中获取的bili_jct值
  *         @property {string} cookie - 完整的cookie字符串
- * @param {Object} [options] - 可选参数
- *         @property {string} filename - 自定义文件名（默认随机生成）
  * @returns {Promise<Object>} - 返回B站API响应结果
  */
 export async function uploadFile(file) {
