@@ -45,11 +45,12 @@ export async function uploadFile(file) {
             method: "POST",
             headers,
             body: formData,
-            redirect: "follow"
+            redirect: "follow",
+            credentials:"include",
         });
 
         const result = await response.json();
-        console.log(result)
+
         // B站API通过code字段判断成功 (0表示成功)
         if (result.code !== 0)
             return new Error(`上传失败: ${result.message} (code: ${result.code})`);

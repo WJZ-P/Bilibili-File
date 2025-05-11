@@ -109,13 +109,15 @@ const handleUpload = () => fileInput.value.click();
 
 
 // 处理文件选择
-const handleFileSelect = (event) => {
+const handleFileSelect = async (event) => {
   console.log("下面打印出传入的文件参数")
   console.log(event.target.files)
+
   //加上文件上传
-  const results=[]//存放上传文件的路径
-  for(let file of event.target.files){
-    results.push(uploadFile(file))
+  const results = []//存放上传文件的路径
+  for (let file of event.target.files) {
+    const result = await uploadFile(file)
+    results.push(result.data.url)//单个资源上传
   }
 
   //添加进来的新的文件
