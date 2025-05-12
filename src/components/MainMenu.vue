@@ -59,7 +59,11 @@
         >
           <div class="col-name" style="text-align: center">
             <i v-if="isImage(file)" class="iconfont icon-file">
-              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M212.31-140Q182-140 161-161q-21-21-21-51.31v-535.38Q140-778 161-799q21-21 51.31-21h535.38Q778-820 799-799q21 21 21 51.31v535.38Q820-182 799-161q-21 21-51.31 21H212.31Zm0-60h535.38q4.62 0 8.46-3.85 3.85-3.84 3.85-8.46v-535.38q0-4.62-3.85-8.46-3.84-3.85-8.46-3.85H212.31q-4.62 0-8.46 3.85-3.85 3.84-3.85 8.46v535.38q0 4.62 3.85 8.46 3.84 3.85 8.46 3.85ZM270-290h423.07L561.54-465.38 449.23-319.23l-80-102.31L270-290Zm-70 90v-560 560Z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                   fill="#5f6368">
+                <path
+                    d="M212.31-140Q182-140 161-161q-21-21-21-51.31v-535.38Q140-778 161-799q21-21 51.31-21h535.38Q778-820 799-799q21 21 21 51.31v535.38Q820-182 799-161q-21 21-51.31 21H212.31Zm0-60h535.38q4.62 0 8.46-3.85 3.85-3.84 3.85-8.46v-535.38q0-4.62-3.85-8.46-3.84-3.85-8.46-3.85H212.31q-4.62 0-8.46 3.85-3.85 3.84-3.85 8.46v535.38q0 4.62 3.85 8.46 3.84 3.85 8.46 3.85ZM270-290h423.07L561.54-465.38 449.23-319.23l-80-102.31L270-290Zm-70 90v-560 560Z"/>
+              </svg>
             </i>
             <i v-else class="iconfont icon-file">
               <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
@@ -134,14 +138,14 @@
   <teleport to="body">
     <transition name="modal-fade">
       <div
-          v-if="showPreviewModal"
+          v-if="showViewModel"
           class="preview-modal"
           @click.self="closePreview"
       >
         <div class="modal-container">
           <!-- 关闭按钮 -->
           <button class="close-btn" @click="closePreview">
-            <i class="iconfont icon-close"></i>
+            <i class="iconfont icon-close"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M256-213.85 213.85-256l224-224-224-224L256-746.15l224 224 224-224L746.15-704l-224 224 224 224L704-213.85l-224-224-224 224Z"/></svg></i>
           </button>
 
           <!-- 图片预览区 -->
@@ -206,7 +210,7 @@ const handleFileSelect = async (event) => {
     const resultFile = {}
     resultFile.name = file.name
     resultFile.size = file.size
-    resultFile.url = result.data.url
+    resultFile.url = result.data.url.replace(/^http:\/\//i, 'https://')
     resultFile.lastModified = Date.now()
     files.value.push(resultFile)//单个资源上传
   }
@@ -239,7 +243,7 @@ const formatSize = (bytes) => {
 const handleDownload = async (file) => {
   try {
     // 1. 通过 fetch 获取文件
-    const response = await fetch(file.url.replace(/^http:\/\//i, 'https://'));
+    const response = await fetch(file.url);
     const blob = await response.blob();
 
     // 2. 创建对象 URL 并强制下载
@@ -265,6 +269,7 @@ const handleDelete = (file) => {
   files.value = files.value.filter(
       f => !(f.name === file.name && f.size === file.size)
   );
+  saveFiles(files)
 };
 
 const handlePreview = (file) => {
@@ -528,7 +533,7 @@ const handleMouseLeave = () => isHovered.value = false
   button {
     background: #00c1ff;
     border: none;
-    padding: 5px;
+    padding: 6px;
     border-radius: 6px;
     cursor: pointer;
     transition: 0.2s;
@@ -588,7 +593,7 @@ const handleMouseLeave = () => isHovered.value = false
 /* 模态框入场动画 */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
 }
 
 .modal-fade-enter-from,
@@ -599,7 +604,7 @@ const handleMouseLeave = () => isHovered.value = false
 .preview-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(229, 232, 232, 0.2);
   z-index: 9999;
   display: flex;
   justify-content: center;
@@ -609,9 +614,9 @@ const handleMouseLeave = () => isHovered.value = false
 
 .modal-container {
   position: relative;
-  background: #1a1a1a;
+  background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 12px 24px rgba(102, 204, 255, 0.35);
   max-width: 90vw;
   max-height: 90vh;
   overflow: hidden;
@@ -647,7 +652,7 @@ const handleMouseLeave = () => isHovered.value = false
 .image-wrapper {
   position: relative;
   width: 80vw;
-  max-width: 1200px;
+  max-width: 2000px;
   height: 80vh;
   display: flex;
   align-items: center;
@@ -660,7 +665,7 @@ const handleMouseLeave = () => isHovered.value = false
   max-height: 100%;
   object-fit: contain;
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  //box-shadow: 0 8px 24px rgb(102, 204, 255);
 }
 
 .loading-indicator {
@@ -704,7 +709,7 @@ const handleMouseLeave = () => isHovered.value = false
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  background: linear-gradient(transparent, rgba(102, 204, 255, 0.76));
   color: white;
   padding: 20px;
   text-align: center;
