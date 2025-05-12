@@ -58,7 +58,10 @@
             :key="file.name + file.size"
         >
           <div class="col-name" style="text-align: center">
-            <i class="iconfont icon-file">
+            <i v-if="isImage(file)" class="iconfont icon-file">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M212.31-140Q182-140 161-161q-21-21-21-51.31v-535.38Q140-778 161-799q21-21 51.31-21h535.38Q778-820 799-799q21 21 21 51.31v535.38Q820-182 799-161q-21 21-51.31 21H212.31Zm0-60h535.38q4.62 0 8.46-3.85 3.85-3.84 3.85-8.46v-535.38q0-4.62-3.85-8.46-3.84-3.85-8.46-3.85H212.31q-4.62 0-8.46 3.85-3.85 3.84-3.85 8.46v535.38q0 4.62 3.85 8.46 3.84 3.85 8.46 3.85ZM270-290h423.07L561.54-465.38 449.23-319.23l-80-102.31L270-290Zm-70 90v-560 560Z"/></svg>
+            </i>
+            <i v-else class="iconfont icon-file">
               <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                    fill="#5f6368">
                 <path
@@ -75,21 +78,39 @@
                 class="btn-preview"
                 @click.stop="handlePreview(file)"
             >
-              <i class="iconfont icon-preview"></i>
-              <span>查看</span>
+              <i class="iconfont icon-preview">
+                <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                     fill="#5f6368">
+                  <path
+                      d="M480.09-336.92q67.99 0 115.49-47.59t47.5-115.58q0-67.99-47.59-115.49t-115.58-47.5q-67.99 0-115.49 47.59t-47.5 115.58q0 67.99 47.59 115.49t115.58 47.5ZM480-392q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm.05 172q-137.97 0-251.43-76.12Q115.16-372.23 61.54-500q53.62-127.77 167.02-203.88Q341.97-780 479.95-780q137.97 0 251.43 76.12Q844.84-627.77 898.46-500q-53.62 127.77-167.02 203.88Q618.03-220 480.05-220ZM480-500Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
+                </svg>
+              </i>
+              <span>预览</span>
             </button>
             <button
                 class="btn-download"
                 @click.stop="handleDownload(file)"
             >
-              <i class="iconfont icon-download"></i>
+              <i class="iconfont icon-download">
+                <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                     fill="#5f6368">
+                  <path
+                      d="M480-328.46 309.23-499.23l42.16-43.38L450-444v-336h60v336l98.61-98.61 42.16 43.38L480-328.46ZM252.31-180Q222-180 201-201q-21-21-21-51.31v-108.46h60v108.46q0 4.62 3.85 8.46 3.84 3.85 8.46 3.85h455.38q4.62 0 8.46-3.85 3.85-3.84 3.85-8.46v-108.46h60v108.46Q780-222 759-201q-21 21-51.31 21H252.31Z"/>
+                </svg>
+              </i>
               <span>下载</span>
             </button>
             <button
                 class="btn-delete"
                 @click.stop="handleDelete(file)"
             >
-              <i class="iconfont icon-delete"></i>
+              <i class="iconfont icon-delete">
+                <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                     fill="#5f6368">
+                  <path
+                      d="M292.31-140q-29.92 0-51.12-21.19Q220-182.39 220-212.31V-720h-40v-60h180v-35.38h240V-780h180v60h-40v507.69Q740-182 719-161q-21 21-51.31 21H292.31ZM680-720H280v507.69q0 5.39 3.46 8.85t8.85 3.46h375.38q4.62 0 8.46-3.85 3.85-3.84 3.85-8.46V-720ZM376.16-280h59.99v-360h-59.99v360Zm147.69 0h59.99v-360h-59.99v360ZM280-720v520-520Z"/>
+                </svg>
+              </i>
               <span>删除</span>
             </button>
           </div>
@@ -507,11 +528,13 @@ const handleMouseLeave = () => isHovered.value = false
   button {
     background: #00c1ff;
     border: none;
-    padding: 8px;
+    padding: 5px;
     border-radius: 6px;
     cursor: pointer;
     transition: 0.2s;
-    width: 60px;
+    width: 70px;
+    display: flex;
+    justify-content: center;
 
     .iconfont {
       color: white;
@@ -560,7 +583,7 @@ const handleMouseLeave = () => isHovered.value = false
   src: url('//at.alicdn.com/t/c/font_123456_xxxxxx.css');
 }
 
-//下面是模态框设置
+/*下面是模态框设置 */
 
 /* 模态框入场动画 */
 .modal-fade-enter-active,
@@ -662,7 +685,9 @@ const handleMouseLeave = () => isHovered.value = false
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error-message {
