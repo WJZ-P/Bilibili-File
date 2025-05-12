@@ -29,7 +29,7 @@
           <!--          这里要放一个隐藏的input元素，用来触发事件-->
           <input
               type="file"
-              ref="fileInput"
+              ref="fileInputEl"
               multiple
               style="display: none"
               @change="handleFileSelect"
@@ -71,6 +71,14 @@
           <div class="col-date" style="text-align: center">{{ formatDate(file.lastModified) }}</div>
           <div class="col-actions">
             <button
+                v-if="isImage(file)"
+                class="btn-preview"
+                @click.stop="handlePreview(file)"
+            >
+              <i class="iconfont icon-preview"></i>
+              <span>查看</span>
+            </button>
+            <button
                 class="btn-download"
                 @click.stop="handleDownload(file)"
             >
@@ -100,25 +108,72 @@
       </div>
     </div>
   </div>
+
+  <!-- 查看图片的模态框 -->
+  <teleport to="body">
+    <transition name="modal-fade">
+      <div
+          v-if="showPreviewModal"
+          class="preview-modal"
+          @click.self="closePreview"
+      >
+        <div class="modal-container">
+          <!-- 关闭按钮 -->
+          <button class="close-btn" @click="closePreview">
+            <i class="iconfont icon-close"></i>
+          </button>
+
+          <!-- 图片预览区 -->
+          <div class="image-wrapper">
+            <img
+                :src="previewImg.url"
+                :alt="previewImg.name"
+                @load="handleImageLoad"
+                @error="handleImageError"
+            >
+            <div v-if="loading" class="loading-indicator">
+              <div class="spinner"></div>
+              <span>加载中...</span>
+            </div>
+            <div v-if="loadError" class="error-message">
+              图片加载失败 😢
+            </div>
+          </div>
+
+          <!-- 底部文件名 -->
+          <div class="file-info">
+            {{ previewImg.name }}
+          </div>
+        </div>
+      </div>
+    </transition>
+  </teleport>
 </template>
 
 <script setup>
 // 后续可在这里添加逻辑
 import {onMounted, ref} from 'vue'
 import {uploadFile} from "../utils/upload.js";
-// 获取input元素的引用
-const fileInput = ref(null);
-const isHovered = ref(false);
+import {loadFiles, saveFiles} from "../utils/save.js";
+
+const fileInputEl = ref(null);//上传文件元素
+const isHovered = ref(false);//鼠标是否悬浮在标题上
 const files = ref([]);
+//下面是模态需要用到的信息
+const previewImg = ref(null)//预览的图片信息，
+const loading = ref(false)
+const loadError = ref(false)
+const showViewModel = ref(false)//是否展示模态框
+
 //加载界面的时候需要从localStorage拿保存好的数据
 onMounted(() => {
-
+  files.value = loadFiles()
 })
 
-const handleUpload = () => fileInput.value.click();
+const handleUpload = () => fileInputEl.value.click();
 
 
-// 处理文件选择
+// 处理文件上传
 const handleFileSelect = async (event) => {
   console.log("下面打印出传入的文件参数")
   console.log(event.target.files)
@@ -134,6 +189,8 @@ const handleFileSelect = async (event) => {
     resultFile.lastModified = Date.now()
     files.value.push(resultFile)//单个资源上传
   }
+  //持久化到localStorage
+  saveFiles(files.value)
 
   // 简单反馈
   // if (newFiles.length) {
@@ -143,7 +200,7 @@ const handleFileSelect = async (event) => {
   // }
 };
 
-// 新增日期格式化方法
+// 日期格式化
 const formatDate = (timestamp) => {
   const date = new Date(timestamp);
   return date.toISOString().split('T')[0]; // YYYY-MM-DD格式
@@ -157,7 +214,7 @@ const formatSize = (bytes) => {
   return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
 };
 
-// 新增操作方法
+// 处理下载
 const handleDownload = async (file) => {
   try {
     // 1. 通过 fetch 获取文件
@@ -182,21 +239,41 @@ const handleDownload = async (file) => {
   }
 };
 
+// 处理删除
 const handleDelete = (file) => {
   files.value = files.value.filter(
       f => !(f.name === file.name && f.size === file.size)
   );
 };
 
-const handleOpen = (file) => {
-  // 创建临时链接，只有图片是支持打开的。
-  console.log(file)
-  const a = document.createElement('a');
-  a.href = file.url;
-  a.download = file.name;
-  a.click();
-  URL.revokeObjectURL(file.url);
+const handlePreview = (file) => {
+  showViewModel.value = true
+  previewImg.value = file
 };
+
+const closePreview = () => {
+  showViewModel.value = false
+  previewImg.value = null
+}
+
+// 图片加载处理
+const handleImageLoad = () => {
+  loading.value = false
+}
+const handleImageError = () => {
+  loading.value = false
+  loadError.value = true
+}
+
+//判断文件是否是图片
+function isImage(file) {
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+  // 从文件名提取扩展名并转为小写
+  const extension = file.name.split('.').pop()?.toLowerCase() || '';
+
+  // 检查是否为图片类型
+  return imageExtensions.includes(extension);
+}
 
 const handleMouseEnter = () => isHovered.value = true
 const handleMouseLeave = () => isHovered.value = false
@@ -448,12 +525,16 @@ const handleMouseLeave = () => isHovered.value = false
     }
 
     &.btn-delete {
-      background: #ff4d4f;
+      background: rgba(245, 75, 76, 0.86);
 
       &:hover {
         background: #ff6668;
         box-shadow: 0 3px 12px rgba(255, 77, 79, 0.3);
       }
+    }
+
+    &.btn-preview {
+      background: rgba(0, 255, 67, 0.56);
     }
   }
 }
@@ -477,5 +558,132 @@ const handleMouseLeave = () => isHovered.value = false
 @font-face {
   font-family: 'iconfont';
   src: url('//at.alicdn.com/t/c/font_123456_xxxxxx.css');
+}
+
+//下面是模态框设置
+
+/* 模态框入场动画 */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.preview-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(8px);
+}
+
+.modal-container {
+  position: relative;
+  background: #1a1a1a;
+  border-radius: 12px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 1;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.icon-close {
+  color: white;
+  font-size: 24px;
+}
+
+.image-wrapper {
+  position: relative;
+  width: 80vw;
+  max-width: 1200px;
+  height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.image-wrapper img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #00aeec;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #ff4d4f;
+  font-size: 1.2em;
+}
+
+.file-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  color: white;
+  padding: 20px;
+  text-align: center;
+  font-size: 0.9em;
+  backdrop-filter: blur(4px);
 }
 </style>
