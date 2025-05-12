@@ -58,7 +58,13 @@
             :key="file.name + file.size"
         >
           <div class="col-name" style="text-align: center">
-            <i class="iconfont icon-file"></i>
+            <i class="iconfont icon-file">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                   fill="#5f6368">
+                <path
+                    d="M330-250h300v-60H330v60Zm0-160h300v-60H330v60Zm-77.69 310Q222-100 201-121q-21-21-21-51.31v-615.38Q180-818 201-839q21-21 51.31-21H570l210 210v477.69Q780-142 759-121q-21 21-51.31 21H252.31ZM540-620v-180H252.31q-4.62 0-8.46 3.85-3.85 3.84-3.85 8.46v615.38q0 4.62 3.85 8.46 3.84 3.85 8.46 3.85h455.38q4.62 0 8.46-3.85 3.85-3.84 3.85-8.46V-620H540ZM240-800v180-180V-160v-640Z"/>
+              </svg>
+            </i>
             {{ file.name }}
           </div>
           <div class="col-size" style="text-align: center">{{ formatSize(file.size) }}</div>
@@ -98,12 +104,16 @@
 
 <script setup>
 // 后续可在这里添加逻辑
-import {ref} from 'vue'
+import {onMounted, ref} from 'vue'
 import {uploadFile} from "../utils/upload.js";
 // 获取input元素的引用
 const fileInput = ref(null);
 const isHovered = ref(false);
 const files = ref([]);
+//加载界面的时候需要从localStorage拿保存好的数据
+onMounted(() => {
+
+})
 
 const handleUpload = () => fileInput.value.click();
 
@@ -114,31 +124,16 @@ const handleFileSelect = async (event) => {
   console.log(event.target.files)
 
   //加上文件上传
-  const results = []//存放上传文件的路径
   for (let file of event.target.files) {
     const result = await uploadFile(file)
-    results.push(result.data.url)//单个资源上传
+    console.log(result)
+    const resultFile = {}
+    resultFile.name = file.name
+    resultFile.size = file.size
+    resultFile.url = result.data.url
+    resultFile.lastModified = Date.now()
+    files.value.push(resultFile)//单个资源上传
   }
-
-  //添加进来的新的文件
-  const newFiles = [...event.target.files].map(file => ({
-    name: file.name,
-    size: file.size,
-    // lastModified: file.lastModified,
-    lastModified: Date.now(),
-    nativeFile: file  // 保留原生文件对象
-  }));
-
-  // 去重逻辑需要相应调整
-  files.value = [...new Set([
-    ...files.value,
-    ...newFiles.filter(newFile =>
-        !files.value.some(existing =>
-            existing.name === newFile.name &&
-            existing.size === newFile.size
-        )
-    )
-  ])];
 
   // 简单反馈
   // if (newFiles.length) {
@@ -163,20 +158,44 @@ const formatSize = (bytes) => {
 };
 
 // 新增操作方法
-const handleDownload = (file) => {
-  // 创建临时下载链接
-  const url = URL.createObjectURL(file.nativeFile);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = file.name;
-  a.click();
-  URL.revokeObjectURL(url);
+const handleDownload = async (file) => {
+  try {
+    // 1. 通过 fetch 获取文件
+    const response = await fetch(file.url.replace(/^http:\/\//i, 'https://'));
+    const blob = await response.blob();
+
+    // 2. 创建对象 URL 并强制下载
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name; // 必须设置文件名
+
+    // 3. 必须将元素添加到 DOM 才能触发下载
+    document.body.appendChild(a);
+    a.click();
+
+    // 4. 清理
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('下载失败:', error);
+  }
 };
 
 const handleDelete = (file) => {
   files.value = files.value.filter(
       f => !(f.name === file.name && f.size === file.size)
   );
+};
+
+const handleOpen = (file) => {
+  // 创建临时链接，只有图片是支持打开的。
+  console.log(file)
+  const a = document.createElement('a');
+  a.href = file.url;
+  a.download = file.name;
+  a.click();
+  URL.revokeObjectURL(file.url);
 };
 
 const handleMouseEnter = () => isHovered.value = true
