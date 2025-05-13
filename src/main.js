@@ -61,17 +61,3 @@ function addMyBtn() {
     })
 }
 
-console.log("这里尝试调用获取cookie的函数")
-console.log(await fetchCookies())
-async function fetchCookies() {
-    return new Promise((resolve) => {
-        GM_cookie.list(
-            { domain: ".bilibili.com", name: "SESSDATA" }, // 明确获取核心登录态
-            (cookies) => {
-                const sessdata = cookies[0].value;
-                // 合并基础cookie
-                resolve(`${document.cookie}; SESSDATA=${sessdata}`);
-            }
-        );
-    });
-}

@@ -25,7 +25,7 @@
       <div class="action-bar">
         <div class="upload-area" @click="handleUpload">
           <i class="iconfont icon-upload"></i>
-          <span>点击上传 / 拖放文件</span>
+          <span>点击上传文件</span>
           <!--          这里要放一个隐藏的input元素，用来触发事件-->
           <input
               type="file"
@@ -36,8 +36,18 @@
           >
         </div>
         <div class="search-box">
-          <input type="text" placeholder="🔍搜索文件...">
-          <i class="iconfont icon-search"></i>
+          <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="搜索文件..."
+              @input="handleSearch"
+          >
+          <i class="iconfont icon-search">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+              <path
+                  d="M781.69-136.92 530.46-388.16q-30 24.77-69 38.77-39 14-80.69 14-102.55 0-173.58-71.01-71.03-71.01-71.03-173.54 0-102.52 71.01-173.6 71.01-71.07 173.54-71.07 102.52 0 173.6 71.03 71.07 71.03 71.07 173.58 0 42.85-14.38 81.85-14.39 39-38.39 67.84l251.23 251.23-42.15 42.16ZM380.77-395.38q77.31 0 130.96-53.66 53.66-53.65 53.66-130.96t-53.66-130.96q-53.65-53.66-130.96-53.66t-130.96 53.66Q196.15-657.31 196.15-580t53.66 130.96q53.65 53.66 130.96 53.66Z"/>
+            </svg>
+          </i>
         </div>
       </div>
 
@@ -54,7 +64,7 @@
         <!-- 动态文件项 -->
         <div
             class="list-item"
-            v-for="file in files"
+            v-for="file in filteredFiles"
             :key="file.name + file.size"
         >
           <div class="col-name" style="text-align: center">
@@ -145,7 +155,13 @@
         <div class="modal-container">
           <!-- 关闭按钮 -->
           <button class="close-btn" @click="closePreview">
-            <i class="iconfont icon-close"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M256-213.85 213.85-256l224-224-224-224L256-746.15l224 224 224-224L746.15-704l-224 224 224 224L704-213.85l-224-224-224 224Z"/></svg></i>
+            <i class="iconfont icon-close">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                   fill="#5f6368">
+                <path
+                    d="M256-213.85 213.85-256l224-224-224-224L256-746.15l224 224 224-224L746.15-704l-224 224 224 224L704-213.85l-224-224-224 224Z"/>
+              </svg>
+            </i>
           </button>
 
           <!-- 图片预览区 -->
@@ -160,9 +176,9 @@
               <div class="spinner"></div>
               <span>加载中...</span>
             </div>
-            <div v-if="loadError" class="error-message">
-              图片加载失败 😢
-            </div>
+            <!--            <div v-if="loadError" class="error-message">-->
+            <!--              图片加载失败 😢-->
+            <!--            </div>-->
           </div>
 
           <!-- 底部文件名 -->
@@ -177,7 +193,7 @@
 
 <script setup>
 // 后续可在这里添加逻辑
-import {onMounted, ref} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {uploadFile} from "../utils/upload.js";
 import {loadFiles, saveFiles} from "../utils/save.js";
 
@@ -190,13 +206,25 @@ const loading = ref(false)
 const loadError = ref(false)
 const showViewModel = ref(false)//是否展示模态框
 
+const searchQuery = ref('')//查询
+
 //加载界面的时候需要从localStorage拿保存好的数据
 onMounted(() => {
   files.value = loadFiles()
 })
 
-const handleUpload = () => fileInputEl.value.click();
+const filteredFiles = computed(() => {
+  if (!searchQuery.value.trim()) return files.value
 
+  const query = searchQuery.value.trim().toLowerCase()
+
+  return files.value.filter(file => {
+    // 多字段匹配：文件名、大小、日期
+    return file.name.toLowerCase().includes(query)
+  })
+})
+
+const handleUpload = () => fileInputEl.value.click();
 
 // 处理文件上传
 const handleFileSelect = async (event) => {
@@ -269,7 +297,9 @@ const handleDelete = (file) => {
   files.value = files.value.filter(
       f => !(f.name === file.name && f.size === file.size)
   );
-  saveFiles(files)
+  console.log("删除后的总文件列表")
+  console.log(files.value)
+  saveFiles(files.value)
 };
 
 const handlePreview = (file) => {
@@ -492,7 +522,7 @@ const handleMouseLeave = () => isHovered.value = false
 .list-header {
   width: 100%;
   display: grid;
-  grid-template-columns: 4fr 1fr 1.5fr 1fr;
+  grid-template-columns: 3fr 1fr 1.5fr 1fr;
   padding: 12px 0;
   border-bottom: 1px solid #eee;
   color: #666;
@@ -502,7 +532,7 @@ const handleMouseLeave = () => isHovered.value = false
 .list-item {
   width: 100%;
   display: grid;
-  grid-template-columns: 4fr 1fr 1.5fr 1fr;
+  grid-template-columns: 3fr 1fr 1.5fr 1fr;
   align-items: center;
   padding: 15px 0;
   border-bottom: 1px solid #f5f5f5;
@@ -665,7 +695,7 @@ const handleMouseLeave = () => isHovered.value = false
   max-height: 100%;
   object-fit: contain;
   border-radius: 8px;
-  //box-shadow: 0 8px 24px rgb(102, 204, 255);
+//box-shadow: 0 8px 24px rgb(102, 204, 255);
 }
 
 .loading-indicator {
@@ -705,15 +735,16 @@ const handleMouseLeave = () => isHovered.value = false
 }
 
 .file-info {
+
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   background: linear-gradient(transparent, rgba(102, 204, 255, 0.76));
-  color: white;
-  padding: 20px;
+  color: #1e1d1d;
+  padding: 15px;
   text-align: center;
-  font-size: 0.9em;
-  backdrop-filter: blur(4px);
+  font-size: 1.0em;
+  backdrop-filter: blur(1px);
 }
 </style>
