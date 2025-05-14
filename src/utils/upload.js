@@ -1,4 +1,4 @@
-const uploadUrl = "https://api.bilibili.com/x/article/creative/article/upcover";
+const uploadUrl = "https://api.bilibili.com/x/article/creative/article/upcover?w_rid=578224db7224b0cab6f62c9abbe7aee2&wts=";
 export const credentials = {}//这个被导出后，在mian里面被传参传入upload函数
 /**
  * B站图片上传函数
@@ -41,7 +41,7 @@ export async function uploadFile(file) {
     });
 
     try {
-        const response = await fetch(uploadUrl, {
+        const response = await fetch(uploadUrl+"w_rid", {
             method: "POST",
             headers,
             body: formData,
