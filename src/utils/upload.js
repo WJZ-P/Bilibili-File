@@ -1,4 +1,5 @@
-const uploadUrl = "https://api.bilibili.com/x/article/creative/article/upcover?w_rid=578224db7224b0cab6f62c9abbe7aee2&wts=";
+//之前用的是专栏的，发现会过期，改用动态的
+const uploadUrl = "https://api.bilibili.com/x/dynamic/feed/draw/upload_bfs";
 export const credentials = {}//这个被导出后，在mian里面被传参传入upload函数
 /**
  * B站图片上传函数
@@ -10,8 +11,8 @@ export const credentials = {}//这个被导出后，在mian里面被传参传入
 export async function uploadFile(file) {
     //console.log(credentials)
     // 校验必要参数
-    if (!file || !credentials?.bili_jct || !credentials?.cookie) {
-        throw new Error('缺少必要参数：file/csrf/cookie');
+    if (!file || !credentials?.bili_jct) {
+        throw new Error('缺少必要参数：file/csrf');
     }
 
     // 构建FormData
@@ -19,8 +20,9 @@ export async function uploadFile(file) {
     const filename = file.name ||
         `bili_upload_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
-    formData.append("binary", file, filename);//这里应该是二进制数据
-    formData.append("filename", filename);
+    formData.append("file_up", file, filename);//这里应该是二进制数据
+    formData.append("biz","new_dyn");
+    formData.append("category","daily");
     formData.append("csrf", credentials.bili_jct);
 
     // 配置请求头
@@ -41,7 +43,7 @@ export async function uploadFile(file) {
     });
 
     try {
-        const response = await fetch(uploadUrl+"w_rid", {
+        const response = await fetch(uploadUrl, {
             method: "POST",
             headers,
             body: formData,
