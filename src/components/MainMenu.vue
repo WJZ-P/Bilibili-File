@@ -75,6 +75,13 @@
                     d="M212.31-140Q182-140 161-161q-21-21-21-51.31v-535.38Q140-778 161-799q21-21 51.31-21h535.38Q778-820 799-799q21 21 21 51.31v535.38Q820-182 799-161q-21 21-51.31 21H212.31Zm0-60h535.38q4.62 0 8.46-3.85 3.85-3.84 3.85-8.46v-535.38q0-4.62-3.85-8.46-3.84-3.85-8.46-3.85H212.31q-4.62 0-8.46 3.85-3.85 3.84-3.85 8.46v535.38q0 4.62 3.85 8.46 3.84 3.85 8.46 3.85ZM270-290h423.07L561.54-465.38 449.23-319.23l-80-102.31L270-290Zm-70 90v-560 560Z"/>
               </svg>
             </i>
+            <i v-else-if="isCompressed(file)" class="iconfont icon-file">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                   fill="#5f6368">
+                <path
+                    d="M640-480v-80h80v80h-80Zm0 80h-80v-80h80v80Zm0 80v-80h80v80h-80ZM447.38-640l-80-80H172.31q-5.39 0-8.85 3.46t-3.46 8.85v455.38q0 5.39 3.46 8.85t8.85 3.46H560v-80h80v80h147.69q5.39 0 8.85-3.46t3.46-8.85v-375.38q0-5.39-3.46-8.85t-8.85-3.46H640v80h-80v-80H447.38ZM172.31-180Q142-180 121-201q-21-21-21-51.31v-455.38Q100-738 121-759q21-21 51.31-21h219.61l80 80h315.77Q818-700 839-679q21 21 21 51.31v375.38Q860-222 839-201q-21 21-51.31 21H172.31ZM160-240v-480 480Z"/>
+              </svg>
+            </i>
             <i v-else class="iconfont icon-file">
               <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                    fill="#5f6368">
@@ -208,6 +215,8 @@ const showViewModel = ref(false)//是否展示模态框
 
 const searchQuery = ref('')//查询
 
+const sliceIndex = 35//切割文件的下标
+
 //加载界面的时候需要从localStorage拿保存好的数据
 onMounted(() => {
   files.value = loadFiles()
@@ -272,7 +281,9 @@ const handleDownload = async (file) => {
   try {
     // 1. 通过 fetch 获取文件
     const response = await fetch(file.url);
-    const blob = await response.blob();
+    let blob = await response.blob();
+
+    if (!isImage(file)) blob = blob.slice(sliceIndex)
 
     // 2. 创建对象 URL 并强制下载
     const url = URL.createObjectURL(blob);
@@ -323,12 +334,30 @@ const handleImageError = () => {
 
 //判断文件是否是图片
 function isImage(file) {
-  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp',];
   // 从文件名提取扩展名并转为小写
   const extension = file.name.split('.').pop()?.toLowerCase() || '';
 
   // 检查是否为图片类型
   return imageExtensions.includes(extension);
+}
+
+//判断是否是压缩包
+function isCompressed(file) {
+  // 常见压缩包扩展名列表（可根据需求扩展）
+  const compressedExtensions = [
+    'zip', 'rar', '7z',
+    'tar', 'gz', 'bz2',
+    'xz', 'dmg', 'iso',
+    'cab', 'arj', 'z',
+    'lz', 'lzma', 'tgz'
+  ];
+
+  // 从文件名提取扩展名并转为小写
+  const extension = file.name.split('.').pop()?.toLowerCase() || '';
+
+  // 检查是否为压缩包类型
+  return compressedExtensions.includes(extension);
 }
 
 const handleMouseEnter = () => isHovered.value = true
