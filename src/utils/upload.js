@@ -20,9 +20,9 @@ export async function uploadFile(file) {
     const filename = file.name ||
         `bili_upload_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
-    formData.append("file_up", file, filename);//这里应该是二进制数据
-    formData.append("bucket","material_up");
-    formData.append("dir","");
+    formData.append("bucket", "material_up");
+    formData.append("dir", "");
+    formData.append("file", file, filename);//这里应该是二进制数据
     formData.append("csrf", credentials.bili_jct);
 
     // 配置请求头
@@ -31,13 +31,13 @@ export async function uploadFile(file) {
         "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6,zh-TW;q=0.5",
         "origin": "https://member.bilibili.com",
         //"priority": "u=1, i",
-        "referer": "https://member.bilibili.com/",
-        "sec-ch-ua": "\"Microsoft Edge\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+        "referer": "https://member.bilibili.com/york/image-material-upload",
+        "sec-ch-ua": "\"Chromium\";v=\"136\", \"Microsoft Edge\";v=\"136\", \"Not.A/Brand\";v=\"99\"",
         "sec-ch-ua-mobile": "?0",
         "sec-ch-ua-platform": "\"Windows\"",
         "sec-fetch-dest": "empty",
         "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-site",
+        "sec-fetch-site": "same-origin",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0",
         //"Cookie": credentials.cookie
     });
@@ -48,11 +48,10 @@ export async function uploadFile(file) {
             headers,
             body: formData,
             redirect: "follow",
-            credentials:"include",
+            credentials: "include",
         });
 
         const result = await response.json();
-
         // B站API通过code字段判断成功 (0表示成功)
         if (result.code !== 0)
             return new Error(`上传失败: ${result.message} (code: ${result.code})`);
