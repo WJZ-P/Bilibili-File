@@ -1,5 +1,5 @@
 //之前用的是专栏的，发现会过期，改用动态的
-const uploadUrl = "https://api.bilibili.com/x/dynamic/feed/draw/upload_bfs";
+const uploadUrl = "https://member.bilibili.com/x/material/up/upload";
 export const credentials = {}//这个被导出后，在mian里面被传参传入upload函数
 /**
  * B站图片上传函数
@@ -21,8 +21,8 @@ export async function uploadFile(file) {
         `bili_upload_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
     formData.append("file_up", file, filename);//这里应该是二进制数据
-    formData.append("biz","new_dyn");
-    formData.append("category","daily");
+    formData.append("bucket","material_up");
+    formData.append("dir","");
     formData.append("csrf", credentials.bili_jct);
 
     // 配置请求头

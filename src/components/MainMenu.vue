@@ -238,7 +238,7 @@ const handleFileSelect = async (event) => {
     const resultFile = {}
     resultFile.name = file.name
     resultFile.size = file.size
-    resultFile.url = result.data.url.replace(/^http:\/\//i, 'https://')
+    resultFile.url = result.data.location.replace(/^http:\/\//i, 'https://')
     resultFile.lastModified = Date.now()
     files.value.push(resultFile)//单个资源上传
   }
