@@ -1,8 +1,4 @@
 <template>
-  <link
-      rel="stylesheet"
-      href="https://at.alicdn.com/t/c/font_1234567_abcdefghijk.css"
-  >
   <div class="main-menu">
     <div class="file-manager">
       <h1 class="cyber-title">
