@@ -1,4 +1,4 @@
-## 一款基于NTQQ Liteloader的加密聊天插件。
+## 一款基于B站的文件托管插件。
 
 <!-- PROJECT SHIELDS -->
 
@@ -19,9 +19,9 @@
 
 <p align="center">
   <a href="https://github.com/WJZ-P/Bilibili-File/">
-    <img src="src/assests/chat_blue.svg" alt="Logo" width="150" height="150" style="color: #66ccff;margin: 0">
+    <img src="src/assests/bilibili.svg" alt="Logo" width="150" height="150" style="color: #66ccff;margin: 0">
   </a>
-  <h1 align="center">Encrypt Chat</h1>
+  <h1 align="center">Bilibili File</h1>
   <p align="center">
     <a href="https://github.com/WJZ-P/Bilibili-File">查看Demo</a>
     ·
@@ -32,19 +32,18 @@
 </p>
 
 <p align="center">
-  <a href="https://www.bilibili.com/video/BV12x411y7SN">
-    <img src="src/assests/凉雨.jpg" alt="凉雨">
+  <a href="https://www.bilibili.com/video/BV1Yx411T7Uz">
+    <img src="https://i0.hdslb.com/bfs/material_up/a704cbc91a40b39ea3c66b33daed66ce683d53fe.jpg" alt="CONNECT~心的连接~">
   </a>
 </p>
-<h2 align="center">"将世界最后的空白刻印在斑驳心海
-而我等蜉蝣只得抒发不足日的无奈"</h2>
+<h2 align="center">"歌唱着BILIBILI 跟我一起 探寻这美丽的天地"</h2>
 
 ## 目录
 
-- [Encrypt Chat](#projectname)
+- [Bilibili File](#projectname)
     - [目录](#目录)
         - [上手指南](#上手指南)
-            - [开发前的配置要求](#开发前的配置要求)
+            - [前置要求](#前置要求)
             - [**插件安装步骤**](#安装步骤)
         - [**使用方法**](#使用方法)
         - [版权说明](#版权说明)
@@ -53,11 +52,11 @@
 
 ## 注意
 
-#### 当前插件最适配的QQ版本是9.9.15-26909，下方有对应QQ版本的下载链接。更高版本可能出现未知bug。
+#### 本插件仅供学习使用
 
 ## 上手指南
 
-###### 开发前的配置要求
+###### 前置要求
 
 1. 请安装LiteLoader，项目地址为 https://github.com/LiteLoaderQQNT/LiteLoaderQQNT
    
