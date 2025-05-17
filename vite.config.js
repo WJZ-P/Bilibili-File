@@ -10,7 +10,7 @@ export default defineConfig({
             entry: 'src/main.js',
             userscript: {
                 name: 'Bilibili File',
-                description:"一款基于哔哩哔哩弹幕网(B站)的文件托管插件",
+                description:"一款基于哔哩哔哩弹幕网(B站)的文件托管插件（￣▽￣）",
                 author: 'https://github.com/WJZ-P',
                 icon: 'https://i0.hdslb.com/bfs/material_up/12d89bc3fa38ffd23e1e8bad1e26037ddcf2f152.png',//脚本图标
                 namespace: 'npm/bilibili-file',//脚本的命名空间
