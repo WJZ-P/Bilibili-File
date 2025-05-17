@@ -12,7 +12,7 @@ export default defineConfig({
                 icon: 'https://vitejs.dev/logo.svg',//脚本图标
                 namespace: 'npm/bilibili-file',//脚本的命名空间
                 match: ['https://www.bilibili.com/*'],
-                grant: ['GM_cookie', 'GM_xmlhttpRequest'],
+                //grant: ['GM_cookie', 'GM_xmlhttpRequest'],
             },
             build: {
                 externalGlobals: {//告诉vite把vue作为外部资源处理，而不是打包到脚本中
