@@ -135,15 +135,10 @@
       </div>
 
 
-      <!-- 底部统计 -->
-      <div class="status-bar" style="width: 100%">
-        <div class="storage-info">
-          <span>已用空间：3.2GB / 10GB</span>
-          <div class="storage-progress">
-            <div class="progress-inner" :style="{width: '32%'}"></div>
-          </div>
-        </div>
-      </div>
+    </div>
+    <div class="footer-info">
+      © 2024 <a href="https://github.com/WJZ-P/Bilibili-File" target="_blank" title="GitHub地址">Bilibili File</a>.
+      Made by WJZ_P with love. （￣▽￣）
     </div>
   </div>
 
@@ -771,5 +766,19 @@ const handleMouseLeave = () => isHovered.value = false
   text-align: center;
   font-size: 1.0em;
   backdrop-filter: blur(1px);
+}
+
+.footer-info {
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  color: #777;
+  font-size: 0.9em;
+  border-top: 1px solid #eee;
+  margin-top: -20px;
+
+  a{
+    color: #66ccff;
+  }
 }
 </style>
