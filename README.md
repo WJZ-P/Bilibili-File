@@ -50,45 +50,31 @@
         - [鸣谢](#鸣谢)
         - [重要声明](#重要声明)
 
-## 注意
+## 重要声明
 
-#### 本插件仅供学习使用
+#### 本项目仅供交流学习使用，禁止用于一切非法用途！任何问题概不负责。(｡•́︿•̀｡)
 
 ## 上手指南
 
 ###### 前置要求
 
-1. 请安装LiteLoader，项目地址为 https://github.com/LiteLoaderQQNT/LiteLoaderQQNT
-   
-2. 下面是社区开发的LiteLoader快捷安装脚本项目，新手请直接下载下面的即可。
-   https://github.com/Mzdyl/LiteLoaderQQNT_Install/
-
-#### 此处提供两个链接：
-
-- [LiteLoader QQNT 下载地址](https://github.com/LiteLoaderQQNT/LiteLoaderQQNT/releases)
-- [LiteLoader QQNT 安装脚本](https://github.com/Mzdyl/LiteLoaderQQNT_Install/releases)
-
-#### 对于网络不好的用户，可以使用以下直链进行下载：
-- [LiteLoader QQNT 安装器直链][LL-installer-link]
-- [QQ9.9.15.26909_x64 版本直链][oldQQ-download-link]
+1. 请先安装油猴(Tampermonkey)。什么是油猴？https://www.tampermonkey.net
 
 ###### 安装步骤
 
-
 1. 下载release中的最新版本
-2. 解压后把整个解压出来的文件夹拖动到Plugins目录下即可。
-3. 重启QQ，LiteLoader会自动加载Encrypt Chat插件。
-
-### 注意，如果使用了上面的install脚本安装liteloader，QQ设置会自带插件商店，在插件商店里可以一键安装本插件。
+2. 在油猴中添加新插件，选择该插件，后缀为.js
 
 # 使用方法
 
-## 1. 打开QQ，随便选择一个聊天对象。支持独立窗口加密
+## 1. 打开B站主页
 <p align="center">
   <a href="https://www.bilibili.com/video/BV12x411y7SN">
-    <img src="src/assests/markdown/chatWindow.png" alt="聊天界面" style="width: 500px">
+    <img src="src/assests/markdown/usecase1.png" alt="聊天界面" style="width: 500px">
   </a>
 </p>
+
+点击投稿旁的传输。
 
 ## 2. 在聊天界面的输入栏右上方会有插件图标，点击即可启用，可以按Ctrl+E快速开关加密功能
 
