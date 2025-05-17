@@ -715,7 +715,6 @@ const handleMouseLeave = () => isHovered.value = false
   max-height: 100%;
   object-fit: contain;
   border-radius: 8px;
-//box-shadow: 0 8px 24px rgb(102, 204, 255);
 }
 
 .loading-indicator {
