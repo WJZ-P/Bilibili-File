@@ -93,13 +93,6 @@
 该项目签署了EPL-2.0 license
 授权许可，详情请参阅 [LICENSE](https://github.com/WJZ-P/Bilibili-File/blob/main/LICENSE)
 
-## 鸣谢
-
-- [LiteLoader QQNT](https://github.com/LiteLoaderQQNT/LiteLoaderQQNT?tab=readme-ov-file)
-- [LiteLoader Euphony](https://github.com/LiteLoaderQQNT/LiteLoaderQQNT?tab=readme-ov-file)
-- [NapCat](https://github.com/NapNeko/NapCatQQ)
-- [LLOneBot](https://github.com/LLOneBot/LLOneBot)
-
 ## 📝 To Do List
 
 - [ ] 链接分享
