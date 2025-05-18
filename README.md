@@ -59,6 +59,7 @@
 ###### 前置要求
 
 1. 请先安装油猴(Tampermonkey)。什么是油猴？https://www.tampermonkey.net
+2. 项目的greasefork地址：https://greasyfork.org/zh-CN/scripts/536378-bilibili-file ，可以从此下载
 
 ###### 安装步骤
 

@@ -3,8 +3,6 @@ import './style.css';
 import App from './App.vue';
 import {credentials} from "./utils/upload.js";
 
-const urls = ["https://www.bilibili.com/", "https://www.bilibili.com", "http://www.bilibili.com/", "http://www.bilibili.com"]
-
 createApp(App).mount(
     (() => {
         if (document.contentType !== 'text/html' || window.location.href !== 'https://www.bilibili.com/bilibili-file') return
@@ -24,11 +22,13 @@ credentials['bili_jct'] = document.cookie.split('; ').find(row => row.startsWith
 credentials['cookie'] = document.cookie
 // console.log(credentials.bili_jct)
 //尝试加上我自己的按钮，方案是复制B站的
-if (urls.includes(window.location.href)) addMyBtn()
+const url=new URL(window.location.href)
+if (url.hostname.includes("www.bilibili.com")) addMyBtn()
 else console.log("[Bilibili-File] 不在B站首页，不添加上传按钮")
 
+
 //如果当前是bilibili-file的路由，改一下标题
-if(window.location.href.includes("bilibili-file")){
+if(url.pathname.includes("bilibili-file")){
     document.title="文件上传 - Bilibili-File"
 }
 function addMyBtn() {
