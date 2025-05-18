@@ -16,6 +16,8 @@ createApp(App).mount(
 );
 
 console.log("[Bilibili-File] 启动")
+console.log("为了防止未加载完成，先等待一秒")
+await sleep(1000)
 //尝试获取bili_jct作为上传参数csrf。
 // console.log(document.cookie)
 credentials['bili_jct'] = document.cookie.split('; ').find(row => row.startsWith('bili_jct='))?.split('=')[1]
@@ -61,3 +63,6 @@ function addMyBtn() {
     })
 }
 
+async function sleep(ms){
+ return new Promise(resolve => setTimeout(resolve, ms));
+}
