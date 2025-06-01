@@ -28,12 +28,10 @@ export const credentials = {}//这个被导出后，在mian里面被传参传入
 /**
  * B站图片上传函数
  * @param {File} file - 文件对象
- *         @property {string} csrf - 从cookie中获取的bili_jct值
- *         @property {string} cookie - 完整的cookie字符串
+ * @param {Function} onProgress - 进度回调函数，参数为进度百分比(0-100)
  * @returns {Promise<Object>} - 返回B站API响应结果
  */
-export async function uploadFile(file) {
-    //console.log(credentials)
+export async function uploadFile(file, onProgress) {
     // 校验必要参数
     if (!file || !credentials?.bili_jct) {
         throw new Error('缺少必要参数：file/csrf');
@@ -59,27 +57,49 @@ export async function uploadFile(file) {
     formData.append("file", file, filename);//这里应该是二进制数据
     formData.append("csrf", credentials.bili_jct);
 
-
-    try {
-        const response = await fetch(uploadUrl, {
-            method: "POST",
-            headers,
-            body: formData,
-            redirect: "follow",
-            credentials: "include",
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        // 监听上传进度
+        xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable && onProgress) {
+                const progress = Math.round((event.loaded / event.total) * 100);
+                onProgress(progress);
+            }
         });
 
-        const result = await response.json();
-        // B站API通过code字段判断成功 (0表示成功)
-        if (result.code !== 0)
-            return new Error(`上传失败: ${result.message} (code: ${result.code})`);
+        // 监听请求完成
+        xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const result = JSON.parse(xhr.responseText);
+                    if (result.code !== 0) {
+                        reject(new Error(`上传失败: ${result.message} (code: ${result.code})`));
+                    } else {
+                        resolve(result);
+                    }
+                } catch (error) {
+                    reject(new Error('解析响应失败'));
+                }
+            } else {
+                reject(new Error(`HTTP错误: ${xhr.status}`));
+            }
+        });
 
-        return result; // 返回整个result
+        // 监听错误
+        xhr.addEventListener('error', () => {
+            reject(new Error('网络请求失败'));
+        });
 
-    } catch (error) {
-        console.error('上传请求异常:', error);
-        throw new Error(`网络请求失败: ${error.message}`);
-    }
+        // 发送请求
+        xhr.open('POST', uploadUrl);
+        // 添加请求头
+        Object.entries(headers).forEach(([key, value]) => {
+            xhr.setRequestHeader(key, value);
+        });
+        xhr.withCredentials = true; // 允许跨域请求携带凭证
+        xhr.send(formData);
+    });
 }
 
 export function isImage(file) {

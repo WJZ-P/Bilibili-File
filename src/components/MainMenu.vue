@@ -120,6 +120,7 @@
               <span>预览</span>
             </button>
             <button
+                v-if="file.status === 'success'"
                 class="btn-download"
                 @click.stop="handleDownload(file)"
             >
@@ -145,6 +146,10 @@
               </i>
               <span>删除</span>
             </button>
+          </div>
+          <!-- 添加进度条 -->
+          <div class="progress-bar" v-if="fileProgress[file.name]">
+            <div class="progress-inner" :style="{ width: `${fileProgress[file.name]}%` }"></div>
           </div>
         </div>
       </div>
@@ -215,7 +220,7 @@
 
 <script setup>
 // 后续可在这里添加逻辑
-import {computed, onMounted, ref} from 'vue'
+import {computed, onMounted, ref, reactive} from 'vue'
 import {uploadFile} from "../utils/upload.js";
 import {loadFiles, saveFiles} from "../utils/save.js";
 
@@ -250,31 +255,56 @@ const filteredFiles = computed(() => {
 
 const handleUpload = () => fileInputEl.value.click();
 
-// 处理文件上传
+// 添加文件进度状态
+const fileProgress = ref({});
+
+// 添加分享链接相关的状态
+const shareLink = ref('');
+
+// 修改文件上传处理函数
 const handleFileSelect = async (event) => {
   console.log("下面打印出传入的文件参数")
   console.log(event.target.files)
 
   //加上文件上传
   for (let file of event.target.files) {
-    const result = await uploadFile(file)
-    console.log(result)
-    const resultFile = {}
-    resultFile.name = file.name
-    resultFile.size = file.size
-    resultFile.url = result.data.location.replace(/^http:\/\//i, 'https://')
-    resultFile.lastModified = Date.now()
-    files.value.push(resultFile)//单个资源上传
+    // 先创建文件对象并立即添加到列表中
+    const resultFile = {
+      name: file.name,
+      size: file.size,
+      url: '', // 暂时为空，上传完成后更新
+      lastModified: Date.now(),
+      status: 'uploading' // 添加状态标记
+    }
+    files.value.push(resultFile)
+    
+    // 初始化进度
+    fileProgress.value[file.name] = 0;
+    
+    try {
+      const result = await uploadFile(file, (progress) => {
+        fileProgress.value[file.name] = progress;
+      });
+      console.log(result)
+      
+      // 上传完成后更新文件信息
+      resultFile.url = result.data.location.replace(/^http:\/\//i, 'https://')
+      resultFile.status = 'success'
+      
+      // 上传完成后延迟移除进度条
+      setTimeout(() => {
+        delete fileProgress.value[file.name];
+      }, 500);
+    } catch (error) {
+      console.error('上传失败:', error);
+      showToastMessage('上传失败，请重试', { clientX: window.innerWidth / 2, clientY: 100 });
+      // 更新文件状态为失败
+      resultFile.status = 'error'
+      delete fileProgress.value[file.name];
+    }
   }
   //持久化到localStorage
   saveFiles(files.value)
-
-  // 简单反馈
-  // if (newFiles.length) {
-  //   alert(`成功添加 ${newFiles.length} 个文件`);
-  // } else {
-  //   alert('没有新文件被添加');
-  // }
 };
 
 // 日期格式化
@@ -291,30 +321,58 @@ const formatSize = (bytes) => {
   return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
 };
 
-// 处理下载
+// 修改下载处理函数
 const handleDownload = async (file) => {
   try {
+    // 初始化进度
+    fileProgress.value[file.name] = 0;
+    
     // 1. 通过 fetch 获取文件
     const response = await fetch(file.url);
-    let blob = await response.blob();
-
-    if (!isImage(file)) blob = blob.slice(sliceIndex)
+    const reader = response.body.getReader();
+    const contentLength = +response.headers.get('Content-Length');
+    
+    let receivedLength = 0;
+    let chunks = [];
+    
+    while(true) {
+      const {done, value} = await reader.read();
+      
+      if (done) {
+        break;
+      }
+      
+      chunks.push(value);
+      receivedLength += value.length;
+      
+      // 更新进度
+      fileProgress.value[file.name] = Math.round((receivedLength / contentLength) * 100);
+    }
+    
+    // 合并数据块
+    let blob = new Blob(chunks);
+    if (!isImage(file)) blob = blob.slice(sliceIndex);
 
     // 2. 创建对象 URL 并强制下载
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = file.name; // 必须设置文件名
-
-    // 3. 必须将元素添加到 DOM 才能触发下载
+    a.download = file.name;
     document.body.appendChild(a);
     a.click();
 
-    // 4. 清理
+    // 3. 清理
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    // 下载完成后延迟移除进度条
+    setTimeout(() => {
+      delete fileProgress.value[file.name];
+    }, 1000);
   } catch (error) {
     console.error('下载失败:', error);
+    showToastMessage('下载失败，请重试', { clientX: window.innerWidth / 2, clientY: 100 });
+    delete fileProgress.value[file.name];
   }
 };
 
@@ -408,10 +466,10 @@ const showToastMessage = (message, event) => {
   
   showToast.value = true;
   
-  // 2秒后隐藏
+  // 延迟后隐藏
   setTimeout(() => {
     showToast.value = false;
-  }, 2000);
+  }, 1000);
 };
 
 // 修改复制链接的方法
@@ -425,10 +483,7 @@ const copyFileLink = async (file, event) => {
   }
 };
 
-// 添加分享链接相关的状态
-const shareLink = ref('');
-
-// 处理分享链接下载
+// 修改分享链接下载函数
 const handleShareLinkDownload = async () => {
   if (!shareLink.value.trim()) {
     showToastMessage('请输入分享链接', { clientX: window.innerWidth / 2, clientY: 100 });
@@ -445,9 +500,33 @@ const handleShareLinkDownload = async () => {
     // 获取文件名
     const fileName = shareLink.value.split('/').pop() || 'downloaded_file';
     
+    // 初始化进度
+    fileProgress.value[fileName] = 0;
+    
     // 下载文件
     const response = await fetch(shareLink.value);
-    const blob = await response.blob();
+    const reader = response.body.getReader();
+    const contentLength = +response.headers.get('Content-Length');
+    
+    let receivedLength = 0;
+    let chunks = [];
+    
+    while(true) {
+      const {done, value} = await reader.read();
+      
+      if (done) {
+        break;
+      }
+      
+      chunks.push(value);
+      receivedLength += value.length;
+      
+      // 更新进度
+      fileProgress.value[fileName] = Math.round((receivedLength / contentLength) * 100);
+    }
+    
+    // 合并数据块
+    const blob = new Blob(chunks);
     
     // 创建下载链接
     const url = URL.createObjectURL(blob);
@@ -464,10 +543,16 @@ const handleShareLinkDownload = async () => {
     // 清空输入框
     shareLink.value = '';
     
+    // 下载完成后延迟移除进度条
+    setTimeout(() => {
+      delete fileProgress.value[fileName];
+    }, 1000);
+    
     showToastMessage('文件下载成功', { clientX: window.innerWidth / 2, clientY: 100 });
   } catch (error) {
     console.error('下载失败:', error);
     showToastMessage('下载失败，请检查链接是否正确', { clientX: window.innerWidth / 2, clientY: 100 });
+    delete fileProgress.value[fileName];
   }
 };
 
@@ -727,6 +812,7 @@ const handleShareLinkDownload = async () => {
   padding: 15px 0;
   border-bottom: 1px solid #f5f5f5;
   transition: background 0.2s;
+  position: relative;
 
   &:hover {
     background: #f9f9f9;
@@ -993,5 +1079,22 @@ const handleShareLinkDownload = async () => {
 
 .col-name:hover {
   color: #00aeec;
+}
+
+/* 进度条样式 */
+.progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(0, 174, 236, 0.1);
+  overflow: hidden;
+}
+
+.progress-inner {
+  height: 100%;
+  background: #00aeec;
+  transition: width 0.3s ease;
 }
 </style>
