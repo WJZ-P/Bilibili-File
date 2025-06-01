@@ -31,6 +31,21 @@
               @change="handleFileSelect"
           >
         </div>
+        <div class="share-link-area">
+          <input
+              type="text"
+              v-model="shareLink"
+              placeholder="粘贴分享链接..."
+              @keyup.enter="handleShareLinkDownload"
+          >
+          <button class="download-btn" @click="handleShareLinkDownload">
+            <i class="iconfont icon-download">
+              <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#5f6368">
+                <path d="M480-328.46 309.23-499.23l42.16-43.38L450-444v-336h60v336l98.61-98.61 42.16 43.38L480-328.46ZM252.31-180Q222-180 201-201q-21-21-21-51.31v-108.46h60v108.46q0 4.62 3.85 8.46 3.84 3.85 8.46 3.85h455.38q4.62 0 8.46-3.85 3.85-3.84 3.85-8.46v-108.46h60v108.46Q780-222 759-201q-21 21-51.31 21H252.31Z"/>
+              </svg>
+            </i>
+          </button>
+        </div>
         <div class="search-box">
           <input
               type="text"
@@ -63,7 +78,7 @@
             v-for="file in filteredFiles"
             :key="file.name + file.size"
         >
-          <div class="col-name" style="text-align: center">
+          <div class="col-name" style="text-align: center" @click="copyFileLink(file,$event)" :title="'点击复制下载链接'">
             <i v-if="isImage(file)" class="iconfont icon-file">
               <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                    fill="#5f6368">
@@ -184,6 +199,15 @@
             {{ previewImg.name }}
           </div>
         </div>
+      </div>
+    </transition>
+  </teleport>
+
+  <!-- 添加Toast提示组件 -->
+  <teleport to="body">
+    <transition name="toast-fade">
+      <div v-if="showToast" class="copy-toast" :style="toastStyle">
+        {{ toastMessage }}
       </div>
     </transition>
   </teleport>
@@ -354,6 +378,99 @@ function isCompressed(file) {
 const handleMouseEnter = () => isHovered.value = true
 const handleMouseLeave = () => isHovered.value = false
 
+// 添加Toast相关的响应式状态
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastPosition = ref({ x: 0, y: 0 });
+
+// 计算Toast样式
+const toastStyle = computed(() => ({
+  left: `${toastPosition.value.x}px`,
+  top: `${toastPosition.value.y}px`
+}));
+
+// 显示Toast的方法
+const showToastMessage = (message, event) => {
+  toastMessage.value = message;
+  
+  // 计算位置
+  const x = event.clientX;
+  const y = event.clientY - 40; // 在鼠标上方显示
+  
+  // 确保不超出视口
+  const maxX = window.innerWidth - 200; // 假设Toast最大宽度为200px
+  const maxY = window.innerHeight - 50; // 假设Toast高度为50px
+  
+  toastPosition.value = {
+    x: Math.min(Math.max(x + 100, 0), maxX), // 水平居中
+    y: Math.min(Math.max(y, 0), maxY)
+  };
+  
+  showToast.value = true;
+  
+  // 2秒后隐藏
+  setTimeout(() => {
+    showToast.value = false;
+  }, 2000);
+};
+
+// 修改复制链接的方法
+const copyFileLink = async (file, event) => {
+  try {
+    await navigator.clipboard.writeText(file.url);
+    showToastMessage('链接已复制到剪贴板', event);
+  } catch (err) {
+    console.error('复制失败:', err);
+    showToastMessage('复制失败，请重试', event);
+  }
+};
+
+// 添加分享链接相关的状态
+const shareLink = ref('');
+
+// 处理分享链接下载
+const handleShareLinkDownload = async () => {
+  if (!shareLink.value.trim()) {
+    showToastMessage('请输入分享链接', { clientX: window.innerWidth / 2, clientY: 100 });
+    return;
+  }
+
+  try {
+    // 验证链接格式
+    if (!shareLink.value.startsWith('https://')) {
+      showToastMessage('请输入有效的链接', { clientX: window.innerWidth / 2, clientY: 100 });
+      return;
+    }
+
+    // 获取文件名
+    const fileName = shareLink.value.split('/').pop() || 'downloaded_file';
+    
+    // 下载文件
+    const response = await fetch(shareLink.value);
+    const blob = await response.blob();
+    
+    // 创建下载链接
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    
+    // 清理
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    // 清空输入框
+    shareLink.value = '';
+    
+    showToastMessage('文件下载成功', { clientX: window.innerWidth / 2, clientY: 100 });
+  } catch (error) {
+    console.error('下载失败:', error);
+    showToastMessage('下载失败，请检查链接是否正确', { clientX: window.innerWidth / 2, clientY: 100 });
+  }
+};
+
 </script>
 
 <style scoped>
@@ -468,6 +585,59 @@ const handleMouseLeave = () => isHovered.value = false
   }
 }
 
+.share-link-area {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: #fff;
+  border: 2px solid #00aeec;
+  border-radius: 8px;
+  padding: 0 15px;
+  transition: all 0.3s;
+
+  &:hover {
+    border-color: #0099cc;
+    box-shadow: 0 2px 8px rgba(0, 174, 236, 0.12);
+  }
+
+  input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 12px 0;
+    font-size: 14px;
+    color: #18191c;
+    background: transparent;
+
+    &::placeholder {
+      color: #9499a0;
+    }
+  }
+
+  .download-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background: rgba(0, 174, 236, 0.1);
+      transform: scale(1.05);
+    }
+
+    .iconfont {
+      color: #00aeec;
+      font-size: 20px;
+    }
+  }
+}
+
 .search-box {
   width: 320px;
   position: relative;
@@ -567,11 +737,17 @@ const handleMouseLeave = () => isHovered.value = false
     align-items: center;
     gap: 10px;
     color: #333;
+    cursor: pointer;
+    transition: color 0.2s;
 
     .iconfont {
       font-size: 20px;
       color: #00aeec;
     }
+  }
+
+  .col-name:hover {
+    color: #00aeec;
   }
 }
 
@@ -779,5 +955,43 @@ const handleMouseLeave = () => isHovered.value = false
   a{
     color: #66ccff;
   }
+}
+
+/* Toast提示样式 */
+.copy-toast {
+  position: fixed;
+  background: rgba(0, 174, 236, 0.85);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 174, 236, 0.3);
+  z-index: 100;
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+/* Toast动画 */
+.toast-fade-enter-active,
+.toast-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-fade-enter-from,
+.toast-fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 10px);
+}
+
+/* 添加文件名可点击的样式 */
+.col-name {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.col-name:hover {
+  color: #00aeec;
 }
 </style>
