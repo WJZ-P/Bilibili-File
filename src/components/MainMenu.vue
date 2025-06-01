@@ -155,6 +155,9 @@
                   </button>
                 </div>
               </td>
+              <div v-if="file.status === 'uploading'" class="progress-bar">
+                <div class="progress-inner" :style="{ width: `${fileProgress[file.name] || 0}%` }"></div>
+              </div>
             </tr>
           </tbody>
         </table>
@@ -272,46 +275,54 @@ const handleFileSelect = async (event) => {
   console.log("下面打印出传入的文件参数")
   console.log(event.target.files)
 
-  //加上文件上传
-  for (let file of event.target.files) {
-    // 先创建文件对象并立即添加到列表中
+  // 先创建所有文件对象并添加到列表中
+  const filePromises = Array.from(event.target.files).map(file => {
     const resultFile = {
       name: file.name,
       size: file.size,
-      url: '', // 暂时为空，上传完成后更新
+      url: '',
       lastModified: Date.now(),
-      status: 'uploading' // 添加状态标记
+      status: 'uploading'
     }
     files.value.push(resultFile)
+    fileProgress.value[file.name] = 0
+    return { file, resultFile }
+  })
+
+  // 并行上传所有文件
+  try {
+    const uploadPromises = filePromises.map(({ file, resultFile }) => 
+      uploadFile(file, (progress) => {
+        fileProgress.value[file.name] = progress
+      }).then(result => {
+        resultFile.url = result.data.location.replace(/^http:\/\//i, 'https://')
+        resultFile.status = 'success'
+        // 立即移除进度条，不需要延迟
+        delete fileProgress.value[file.name]
+      }).catch(error => {
+        console.error(`文件 ${file.name} 上传失败:`, error)
+        resultFile.status = 'error'
+        delete fileProgress.value[file.name]
+        showToastMessage(`文件 ${file.name} 上传失败，请重试`, { 
+          clientX: window.innerWidth / 2, 
+          clientY: 100 
+        })
+      })
+    )
+
+    // 等待所有上传完成
+    await Promise.all(uploadPromises)
     
-    // 初始化进度
-    fileProgress.value[file.name] = 0;
-    
-    try {
-      const result = await uploadFile(file, (progress) => {
-        fileProgress.value[file.name] = progress;
-      });
-      console.log(result)
-      
-      // 上传完成后更新文件信息
-      resultFile.url = result.data.location.replace(/^http:\/\//i, 'https://')
-      resultFile.status = 'success'
-      
-      // 上传完成后延迟移除进度条
-      setTimeout(() => {
-        delete fileProgress.value[file.name];
-      }, 500);
-    } catch (error) {
-      console.error('上传失败:', error);
-      showToastMessage('上传失败，请重试', { clientX: window.innerWidth / 2, clientY: 100 });
-      // 更新文件状态为失败
-      resultFile.status = 'error'
-      delete fileProgress.value[file.name];
-    }
+    // 持久化到localStorage
+    saveFiles(files.value)
+  } catch (error) {
+    console.error('批量上传过程中发生错误:', error)
+    showToastMessage('上传过程中发生错误，请重试', { 
+      clientX: window.innerWidth / 2, 
+      clientY: 100 
+    })
   }
-  //持久化到localStorage
-  saveFiles(files.value)
-};
+}
 
 // 日期格式化
 const formatDate = (timestamp) => {
@@ -625,11 +636,10 @@ const handleShareLinkDownload = async () => {
 .main-menu {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: start;
+  justify-content: center;
+  align-items: center;
   width: 100%;
   height: 100%;
-  overflow-x: hidden; /* 防止水平滚动 */
 }
 
 .file-manager {
@@ -641,10 +651,10 @@ const handleShareLinkDownload = async () => {
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  height: 100%;
-  justify-content: center;
+  height: calc(100vh - 150px); /* 设置固定高度，减去其他元素的高度 */
+  justify-content: flex-start;
   align-items: center;
-  box-sizing: border-box; /* 确保padding不会增加总宽度 */
+  box-sizing: border-box;
 }
 
 /* 操作栏 */
@@ -797,7 +807,9 @@ const handleShareLinkDownload = async () => {
 /* 文件列表 */
 .file-list {
   width: 100%;
-  overflow-x: auto; /* 如果表格内容过宽，允许在列表区域内滚动 */
+  overflow-y: auto; /* 允许垂直滚动 */
+  flex: 1; /* 占据剩余空间 */
+  position: relative; /* 为进度条定位提供参考 */
 }
 
 .file-table {
@@ -805,7 +817,6 @@ const handleShareLinkDownload = async () => {
   border-collapse: collapse;
   border-spacing: 0;
   table-layout: fixed;
-  min-width: 800px; /* 设置最小宽度，防止表格过窄 */
 }
 
 .file-table th,
@@ -839,6 +850,7 @@ const handleShareLinkDownload = async () => {
 }
 
 .file-row {
+  position: relative;
   transition: background 0.2s;
 }
 
@@ -847,12 +859,14 @@ const handleShareLinkDownload = async () => {
 }
 
 .file-name-cell {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
   transition: color 0.2s;
-  text-align: left; 
+  text-align: left;
+  padding-bottom: 4px;
 }
 
 .file-name-cell:hover {
@@ -889,6 +903,12 @@ const handleShareLinkDownload = async () => {
     font-size: 18px;
   }
 
+  span {
+    color: white;
+    font-weight: 400;
+    font-size: 14px;
+  }
+
   &:hover {
     background: #66ccff;
     transform: translateY(-2px);
@@ -906,6 +926,11 @@ const handleShareLinkDownload = async () => {
 
   &.btn-preview {
     background: rgba(0, 255, 67, 0.56);
+
+    &:hover {
+      background: rgba(0, 255, 67, 0.76);
+      box-shadow: 0 3px 12px rgba(0, 255, 67, 0.3);
+    }
   }
 }
 
@@ -918,12 +943,15 @@ const handleShareLinkDownload = async () => {
   height: 2px;
   background: rgba(0, 174, 236, 0.1);
   overflow: hidden;
+  border-radius: 1px;
+  z-index: 1;
 }
 
 .progress-inner {
   height: 100%;
   background: #00aeec;
   transition: width 0.3s ease;
+  border-radius: 1px;
 }
 
 /* 图标字体 */
@@ -1062,13 +1090,12 @@ const handleShareLinkDownload = async () => {
 }
 
 .footer-info {
-  width: 100%;
+  width: 90%;
   text-align: center;
-  padding: 10px;
   color: #777;
-  font-size: 0.9em;
+  font-size: 1em;
   border-top: 1px solid #eee;
-  margin-top: -20px;
+
 
   a{
     color: #66ccff;
@@ -1103,8 +1130,8 @@ const handleShareLinkDownload = async () => {
   transform: translate(-50%, 10px);
 }
 
-/* 添加文件名可点击的样式 */
 .col-name {
+  position: relative;
   cursor: pointer;
   transition: color 0.2s;
 }
@@ -1113,31 +1140,37 @@ const handleShareLinkDownload = async () => {
   color: #00aeec;
 }
 
-/* 进度条样式 */
-.progress-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: rgba(0, 174, 236, 0.1);
-  overflow: hidden;
+/* 美化滚动条 */
+.file-list::-webkit-scrollbar {
+  width: 8px;
 }
 
-.progress-inner {
-  height: 100%;
-  background: #00aeec;
-  transition: width 0.3s ease;
+.file-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
 }
 
-/* 修改操作按钮样式 */
-.action-table {
-  width: 100%;
-  border-collapse: collapse;
+.file-list::-webkit-scrollbar-thumb {
+  background: #66ccff;
+  border-radius: 4px;
 }
 
-.action-table td {
-  padding: 0 5px;
-  text-align: center;
+.file-list::-webkit-scrollbar-thumb:hover {
+  background: #0099cc;
+}
+
+/* 确保表头固定 */
+.file-table thead {
+  position: sticky;
+  top: 0;
+  background: #fafafa;
+  z-index: 2;
+}
+
+.file-table th {
+  position: sticky;
+  top: 0;
+  background: #fafafa;
+  z-index: 2;
 }
 </style>
