@@ -44,7 +44,7 @@ export async function uploadFile(file, onProgress) {
         // console.log(pixelBuffer)
         const mergedBlob = new Blob([pixelBuffer, new Blob([file])])
         //修改file为图片+文件
-        file=new File([mergedBlob], file.name)
+        file = new File([mergedBlob], file.name)
     }
 
     // 构建FormData
@@ -59,7 +59,7 @@ export async function uploadFile(file, onProgress) {
 
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        
+
         // 监听上传进度
         xhr.upload.addEventListener('progress', (event) => {
             if (event.lengthComputable && onProgress) {
@@ -109,4 +109,105 @@ export function isImage(file) {
 
     // 检查是否为图片类型
     return imageExtensions.includes(extension);
+}
+
+/**
+ * 大文件分片上传函数
+ * @param {File} file - 要上传的文件
+ * @param {Function} onProgress - 进度回调函数
+ * @param {number} chunkSize - 分片大小，默认15MB
+ * @returns {Promise<Object>} - 返回上传结果
+ */
+export async function uploadLargeFile(file, onProgress, chunkSize = 20 * 1024 * 1024) {
+    // 校验必要参数
+    if (!file || !credentials?.bili_jct) {
+        throw new Error('缺少必要参数：file/csrf');
+    }
+
+    // 计算总分片数
+    const totalChunks = Math.ceil(file.size / chunkSize);
+    let uploadedChunks = 0;
+    let uploadedSize = 0;
+
+    // 创建临时文件对象数组
+    const chunks = [];
+    for (let i = 0; i < totalChunks; i++) {
+        const start = i * chunkSize;
+        const end = Math.min(start + chunkSize, file.size);
+        const chunk = file.slice(start, end);
+        chunks.push(chunk);
+    }
+
+    // 上传每个分片
+    const uploadPromises = chunks.map(async (chunk, index) => {
+        // 为每个分片创建临时文件
+        const chunkFile = new File([chunk], `${file.name}.part${index}.jpg`, {
+            type: 'image/jpeg' // 强制设置为图片类型
+        });
+
+        try {
+            // 上传分片
+            const result = await uploadFile(chunkFile, (progress) => {
+                // 计算总体进度
+                const chunkProgress = (progress / totalChunks);
+                const totalProgress = Math.round((uploadedSize + (chunk.size * progress / 100)) / file.size * 100);
+                onProgress(totalProgress);
+            });
+
+            uploadedChunks++;
+            uploadedSize += chunk.size;
+
+            return {
+                index,
+                url: result.data.location
+            };
+        } catch (error) {
+            throw new Error(`分片 ${index + 1}/${totalChunks} 上传失败: ${error.message}`);
+        }
+    });
+
+    try {
+        // 并行上传所有分片
+        const results = await Promise.all(uploadPromises); //results是数组
+
+        // 按索引排序结果
+        results.sort((a, b) => a.index - b.index);
+
+        const fileInfo = {
+            urls: results,
+            finishUploadTime: Math.floor(Date.now() / 1000), // 秒级时间戳
+            fileName: file.name,
+            fileSize: Math.ceil(file.size / 1024), // KB
+        }
+
+        // 将 JSON 二进制化并添加魔术字节
+        const magicBytes = new TextEncoder().encode('BILI_JSON_MAGIC');//增加魔术字节
+        const jsonData = JSON.stringify(chunkInfo);
+        const jsonBytes = new TextEncoder().encode(jsonData);
+        const combinedData = new Blob([magicBytes, jsonBytes]);
+
+        const blankImage = await fetch(pixelPath).then(res => res.blob());
+        const mergedBlob = new Blob([blankImage, combinedData]);
+
+        // 上传包含 JSON 的图片
+        const jsonFile = new File([mergedBlob], `${file.name}.json.png`, { type: 'image/png' });
+        const jsonUploadResult = await uploadFile(jsonFile);
+
+        // result.data.location.replace(/^http:\/\//i, 'https://') 是下载地址
+
+        
+
+        // 返回所有分片的URL
+        return {
+            code: 0,
+            data: {
+                location: results.map(r => r.url),
+                totalChunks,
+                fileName: file.name,
+                fileSize: file.size
+            }
+        };
+    } catch (error) {
+        throw new Error(`大文件上传失败: ${error.message}`);
+    }
 }
