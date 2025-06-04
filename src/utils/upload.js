@@ -112,6 +112,35 @@ export function isImage(file) {
 }
 
 /**
+ * 检查文件是否需要分片上传
+ * @param {File} file - 要检查的文件
+ * @param {number} threshold - 分片阈值，默认20MB
+ * @returns {boolean} - 是否需要分片上传
+ */
+export function needChunkUpload(file, threshold = 20 * 1024 * 1024) {
+    return file.size > threshold;
+}
+
+/**
+ * 统一的上传入口函数
+ * @param {File} file - 要上传的文件
+ * @param {Function} onProgress - 进度回调函数
+ * @returns {Promise<Object>} - 返回上传结果
+ */
+export async function upload(file, onProgress) {
+    if (!file || !credentials?.bili_jct) {
+        throw new Error('缺少必要参数：file/csrf');
+    }
+
+    // 根据文件大小决定使用哪种上传方式
+    if (needChunkUpload(file)) {
+        return await uploadLargeFile(file, onProgress);
+    } else {
+        return await uploadFile(file, onProgress);
+    }
+}
+
+/**
  * 大文件分片上传函数
  * @param {File} file - 要上传的文件
  * @param {Function} onProgress - 进度回调函数
@@ -151,7 +180,8 @@ export async function uploadLargeFile(file, onProgress, chunkSize = 20 * 1024 * 
                 // 计算总体进度
                 const chunkProgress = (progress / totalChunks);
                 const totalProgress = Math.round((uploadedSize + (chunk.size * progress / 100)) / file.size * 100);
-                onProgress(totalProgress);
+                // 保留90%的进度给分片上传，10%留给元数据上传
+                onProgress(Math.min(90, totalProgress));
             });
 
             uploadedChunks++;
@@ -159,7 +189,7 @@ export async function uploadLargeFile(file, onProgress, chunkSize = 20 * 1024 * 
 
             return {
                 index,
-                url: result.data.location
+                url: result.data.location.replace(/^http:\/\//i, 'https://'),
             };
         } catch (error) {
             throw new Error(`分片 ${index + 1}/${totalChunks} 上传失败: ${error.message}`);
@@ -182,7 +212,7 @@ export async function uploadLargeFile(file, onProgress, chunkSize = 20 * 1024 * 
 
         // 将 JSON 二进制化并添加魔术字节
         const magicBytes = new TextEncoder().encode('BILI_JSON_MAGIC');//增加魔术字节
-        const jsonData = JSON.stringify(chunkInfo);
+        const jsonData = JSON.stringify(fileInfo);
         const jsonBytes = new TextEncoder().encode(jsonData);
         const combinedData = new Blob([magicBytes, jsonBytes]);
 
@@ -191,17 +221,19 @@ export async function uploadLargeFile(file, onProgress, chunkSize = 20 * 1024 * 
 
         // 上传包含 JSON 的图片
         const jsonFile = new File([mergedBlob], `${file.name}.json.png`, { type: 'image/png' });
-        const jsonUploadResult = await uploadFile(jsonFile);
-
-        // result.data.location.replace(/^http:\/\//i, 'https://') 是下载地址
-
+        onProgress(95); // 更新进度到95%
+        const jsonUploadResult = await uploadFile(jsonFile, () => {
+            // 这里不更新进度，因为已经在外面设置了95%
+        });
         
+        onProgress(100); // 完成上传
 
-        // 返回所有分片的URL
+        // 返回所有分片的URL和元数据文件URL
         return {
             code: 0,
             data: {
-                location: results.map(r => r.url),
+                location: jsonUploadResult.data.location.replace(/^http:\/\//i, 'https://'),
+                chunks: results.map(r => r.url),
                 totalChunks,
                 fileName: file.name,
                 fileSize: file.size

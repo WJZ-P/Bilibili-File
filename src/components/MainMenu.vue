@@ -453,7 +453,7 @@ function isCompressed(file) {
 const handleMouseEnter = () => isHovered.value = true
 const handleMouseLeave = () => isHovered.value = false
 
-// 添加Toast相关的响应式状态
+// Toast相关的响应式状态
 const showToast = ref(false);
 const toastMessage = ref('');
 const toastPosition = ref({ x: 0, y: 0 });
