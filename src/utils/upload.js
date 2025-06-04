@@ -128,14 +128,13 @@ export function needChunkUpload(file, threshold = 20 * 1024 * 1024) {
  * @returns {Promise<Object>} - 返回上传结果
  */
 export async function upload(file, onProgress) {
-    if (!file || !credentials?.bili_jct) {
-        throw new Error('缺少必要参数：file/csrf');
-    }
 
     // 根据文件大小决定使用哪种上传方式
     if (needChunkUpload(file)) {
+        console.log("检测到文件>20M,使用大文件上传")
         return await uploadLargeFile(file, onProgress);
     } else {
+        console.log("检测到文件<20M,使用小文件上传")
         return await uploadFile(file, onProgress);
     }
 }
